@@ -8,4 +8,4 @@ build:
 	npm run tauri build
 
 run-dev:
-	npm run tauri dev
+	RUST_LOG=error,warn,info,debug,reqwest=off npm run tauri dev

@@ -7,8 +7,12 @@
     text-color="#fff"
     active-text-color="#ffd04b"
   >
-    <el-menu-item index="homepage">主页</el-menu-item>
-    <el-menu-item index="orderpage">订单管理 </el-menu-item>
+    <el-submenu index="eth">
+      <template v-slot:title>Ethereum</template>
+      <el-menu-item index="ethAddrGen">地址生成</el-menu-item>
+      <el-menu-item index="ethAddrBalance">余额查询</el-menu-item>
+    </el-submenu>
+    <el-menu-item index="about">关于</el-menu-item>
   </el-menu>
 </template>
 
@@ -21,11 +25,13 @@
 
 <script setup>
 import { ref } from 'vue';
+import { navmenu } from '../../js/store.js';
 
-const emit = defineEmits(['switchMenu']);
-const activeIndex = ref('homepage');
+const activeIndex = ref(navmenu.selectedPage);
 
-function handleSelect(key) {
-  emit('switchMenu', key);
+function handleSelect(page) {
+  navmenu[navmenu.selectedPage] = false;
+  navmenu[page] = true;
+  navmenu.selectedPage = page;
 }
 </script>

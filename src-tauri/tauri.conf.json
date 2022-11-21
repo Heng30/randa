@@ -33,7 +33,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "randa.dev",
+      "identifier": "com.randa.dev",
       "longDescription": "",
       "macOS": {
         "entitlements": null,

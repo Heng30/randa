@@ -1,22 +1,14 @@
 <script setup>
-import Homepage from './Homepage.vue';
-import Orderpage from './Orderpage.vue';
-import { ref, watchEffect } from 'vue';
-
-const props = defineProps({
-  selectedMenu: String,
-});
-
-const selectedMenu = ref('homepage');
-
-watchEffect(() => {
-  selectedMenu.value = props.selectedMenu;
-});
-
+import About from './About.vue';
+import EthAddrGen from './eth/AddrGen.vue';
+import EthAddrBalance from './eth/AddrBalance.vue';
+import { navmenu } from '../../js/store.js';
 </script>
+
 <template>
-  <div style="background-color: white; height: 100%; width: 100%">
-    <Homepage v-show="selectedMenu == 'homepage'"/>
-    <Orderpage v-show="selectedMenu == 'orderpage'"/>
+  <div style="background-color: white; height: 100%; width: 100%; overflow: hidden;">
+    <EthAddrGen v-show="navmenu.ethAddrGen" />
+    <EthAddrBalance v-show="navmenu.ethAddrBalance" />
+    <About v-show="navmenu.about" />
   </div>
 </template>
