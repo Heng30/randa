@@ -12,6 +12,10 @@
       <el-menu-item index="ethAddrGen">地址生成</el-menu-item>
       <el-menu-item index="ethAddrBalance">余额查询</el-menu-item>
     </el-submenu>
+    <el-submenu index="setting">
+      <template v-slot:title>设置</template>
+      <el-menu-item index="ethSetting">Ethereum</el-menu-item>
+    </el-submenu>
     <el-menu-item index="about">关于</el-menu-item>
   </el-menu>
 </template>

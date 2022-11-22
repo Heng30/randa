@@ -38,8 +38,8 @@
       >
       </el-input>
 
-      <el-button type="primary" @click="genAddr()" style="margin-left: 30px"
-        >确定</el-button
+      <el-button :loading="isGenerating" type="primary" @click="genAddr()" style="margin-left: 30px"
+        >{{ isGenerating ? "正在生成地址" : "确定" }} </el-button
       >
       <el-button type="primary" @click="exportAddr()" style="margin-left: 30px">
         导出为CSV
@@ -67,12 +67,13 @@
 <script setup>
 import { ethers } from 'ethers';
 import { ref } from 'vue';
-import { Message, ElLoading } from 'element3';
+import { Message} from 'element3';
 import { invoke } from '@tauri-apps/api/tauri';
 import { json2obj } from '../../../js/utils.js';
 
 const addrCnt = ref(1);
 const tableData = ref([]);
+const isGenerating = ref(false);
 
 // Chose the length of your mnemonic:
 //   - 16 bytes => 12 words
@@ -129,13 +130,7 @@ function genAddr() {
     return;
   }
 
-  const loading = ElLoading.service({
-    lock: true,
-    text: '正在生成地址...',
-    spinner: 'el-icon-loading',
-    background: 'rgba(0, 0, 0, 0.7)',
-  });
-
+  isGenerating.value = true;
   setTimeout(() => {
     let tdata = [];
     for (let i = 0; i < Number(addrCnt.value); i++) {
@@ -154,7 +149,7 @@ function genAddr() {
     }
 
     tableData.value = tdata;
-    loading.close();
+    isGenerating.value = false;
   }, 100);
 }
 
