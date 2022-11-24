@@ -6,6 +6,7 @@
     background-color="#545c64"
     text-color="#fff"
     active-text-color="#ffd04b"
+    menu-trigger="click"
   >
     <el-submenu index="eth">
       <template v-slot:title>Ethereum</template>

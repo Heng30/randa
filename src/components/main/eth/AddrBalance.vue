@@ -33,26 +33,19 @@
         style="margin-left: 30px"
         >查询</el-button
       >
-      <el-button
-        type="primary"
-        @click="importAddrs()"
-        style="margin-left: 30px"
-      >
-        批量导入
-      </el-button>
     </div>
 
     <el-table
       :data="tableData"
       style="width: 100%"
-      height="800"
+      height="1000"
       highlight-current-row
       border
       stripe
     >
-      <el-table-column prop="address" label="地址" width="800">
+      <el-table-column prop="address" label="地址" width="500">
       </el-table-column>
-      <el-table-column prop="balance" label="余额" width="300">
+      <el-table-column prop="balance" label="余额" width="250">
       </el-table-column>
       <el-table-column align="right">
         <template v-slot:header="scope">
@@ -64,10 +57,21 @@
             />
             <el-button
               type="primary"
-              style="margin-left: 30px"
+              style="margin: 0 10px 0 30px"
               @click="addAddr()"
-              >插入</el-button
+              >添加</el-button
             >
+            <el-divider direction="vertical"></el-divider>
+
+            <el-button
+              type="primary"
+              @click="importAddrs()"
+              style="margin-left: 10px"
+            >
+              批量导入
+            </el-button>
+
+            <el-button type="primary" @click="saveAddrs()"> 保存 </el-button>
           </div>
         </template>
         <template v-slot="scope">
@@ -88,7 +92,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { json2obj } from '../../../js/utils.js';
 import { ethNetwork } from '../../../js/store.js';
 
-const currentNetwork = ref('Ethereum 主网');
+const currentNetwork = ref('ethereum');
 const tableData = ref([]);
 const inputAddr = ref('');
 

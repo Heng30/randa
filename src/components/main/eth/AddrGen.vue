@@ -38,10 +38,17 @@
       >
       </el-input>
 
-      <el-button :loading="isGenerating" type="primary" @click="genAddr()" style="margin-left: 30px"
-        >{{ isGenerating ? "正在生成地址" : "确定" }} </el-button
-      >
-      <el-button type="primary" @click="exportAddr()" style="margin-left: 30px">
+      <el-button
+        :loading="isGenerating"
+        type="primary"
+        @click="genAddr()"
+        style="margin: 0 10px 0 30px"
+        >{{ isGenerating ? '正在生成地址' : '确定' }}
+      </el-button>
+
+      <el-divider direction="vertical"></el-divider>
+
+      <el-button type="primary" @click="exportAddr()" style="margin-left: 10px">
         导出为CSV
       </el-button>
     </div>
@@ -67,7 +74,7 @@
 <script setup>
 import { ethers } from 'ethers';
 import { ref } from 'vue';
-import { Message} from 'element3';
+import { Message } from 'element3';
 import { invoke } from '@tauri-apps/api/tauri';
 import { json2obj } from '../../../js/utils.js';
 
@@ -150,6 +157,11 @@ function genAddr() {
 
     tableData.value = tdata;
     isGenerating.value = false;
+
+    Message({
+      message: '生成地址成功!',
+      type: 'success',
+    });
   }, 100);
 }
 
@@ -185,7 +197,7 @@ async function exportAddr() {
     if (res.code === 0) {
       Message({
         message: '保存成功! 文件路径: ' + res.msg,
-        type: 'info',
+        type: 'success',
       });
     } else {
       Message({
@@ -194,10 +206,10 @@ async function exportAddr() {
       });
     }
   } else {
-      Message({
-        message: '保存文件失败! 原因未知!',
-        type: 'warning',
-      });
+    Message({
+      message: '保存文件失败! 原因未知!',
+      type: 'warning',
+    });
   }
 }
 </script>

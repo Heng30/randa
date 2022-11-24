@@ -11,14 +11,14 @@ export const navmenu = reactive({
 export const ethNetwork = reactive([
     {
         name: "Ethereum 主网",
-        network: "",
+        network: "ethereum",
     },
     {
         name: "Goerli 测试网络",
-        network: "",
+        network: "2",
     },
     {
         name: "Sepolia 测试网络",
-        network: "",
+        network: "3",
     }
 ])
