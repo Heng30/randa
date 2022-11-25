@@ -5,11 +5,13 @@
 
 use chrono::Local;
 use env_logger::fmt::Color as LColor;
-#[allow(unused_imports)]
-use log::{debug, error, info, trace, warn};
+use log::{debug, warn};
 use platform_dirs::AppDirs;
 use std::fs;
 use std::io::Write;
+use tauri;
+use tauri_plugin_sqlite;
+use tokio;
 
 mod def;
 mod utils;
@@ -26,6 +28,7 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![utils::data_dir])
         .invoke_handler(tauri::generate_handler![utils::write_file])
         .invoke_handler(tauri::generate_handler![utils::write_file_2_tmp])
+        .plugin(tauri_plugin_sqlite::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 

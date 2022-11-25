@@ -56,7 +56,7 @@
     <el-table
       :data="tableData"
       style="width: 100%"
-      height="800"
+      height="1000"
       highlight-current-row
       border
       stripe

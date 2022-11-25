@@ -28,7 +28,13 @@ pub fn write_file(filepath: &str, text: &str) -> String {
 #[tauri::command]
 pub fn write_file_2_tmp(filename: &str, text: &str) -> String {
     let app_dirs = AppDirs::new(Some(def::APP_NAME), true).unwrap();
-    let filepath = app_dirs.data_dir.join("tmp").join(filename).to_str().unwrap().to_string();
+    let filepath = app_dirs
+        .data_dir
+        .join("tmp")
+        .join(filename)
+        .to_str()
+        .unwrap()
+        .to_string();
     write_file(&filepath, text)
 }
 
@@ -43,7 +49,6 @@ pub fn data_dir() -> String {
     let app_dirs = AppDirs::new(Some(def::APP_NAME), true).unwrap();
     app_dirs.data_dir.to_str().unwrap().to_string()
 }
-
 
 #[tauri::command]
 pub fn rlog(text: &str) {

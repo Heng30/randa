@@ -29,9 +29,10 @@
 
       <el-button
         type="primary"
-        @click="queryAddrBalance()"
+        @click="queryAddrsBalance()"
         style="margin-left: 30px"
-        >查询</el-button
+        :loading="isQuerying"
+        >{{ isQuerying ? '正在查询' : '查询' }}</el-button
       >
     </div>
 
@@ -53,7 +54,7 @@
             <el-input
               v-model="inputAddr"
               placeholder="请输入需要查询余额的地址"
-              style="width: 500px"
+              style="width: 400px"
             />
             <el-button
               type="primary"
@@ -62,14 +63,14 @@
               >添加</el-button
             >
             <el-divider direction="vertical"></el-divider>
-
-            <el-button
-              type="primary"
-              @click="importAddrs()"
-              style="margin-left: 10px"
-            >
-              批量导入
-            </el-button>
+            <el-tooltip content="提示: 每个地址占一行!" placement="top">
+              <FileDialog
+                @accept="importAddrs"
+                style="margin-left: 10px"
+                buttonLabel="批量导入"
+              >
+              </FileDialog>
+            </el-tooltip>
 
             <el-button type="primary" @click="saveAddrs()"> 保存 </el-button>
           </div>
@@ -88,23 +89,47 @@
 import { ethers } from 'ethers';
 import { ref } from 'vue';
 import { Message } from 'element3';
-import { invoke } from '@tauri-apps/api/tauri';
-import { json2obj } from '../../../js/utils.js';
+//import { invoke } from '@tauri-apps/api/tauri';
+import Web3 from 'web3';
+import { arrayBuffer2UTF8 } from '../../../js/utils.js';
 import { ethNetwork } from '../../../js/store.js';
+import FileDialog from '../../cbase/FileDialog.vue';
 
-const currentNetwork = ref('ethereum');
+const currentNetwork = ref('homestead');
 const tableData = ref([]);
 const inputAddr = ref('');
+const isQuerying = ref(false);
+
+async function queryAddrsBalance() {
+  let provider = ethers.getDefaultProvider(currentNetwork.value);
+
+  isQuerying.value = true;
+  for (let i = 0; i < tableData.value.length; i++) {
+    let addr = tableData.value[i].address;
+    let balance = await provider.getBalance(addr);
+    let ethStr = ethers.utils.formatEther(balance);
+    tableData.value[i].balance = Number(ethStr).toFixed(4) + ' Eth';
+  }
+  isQuerying.value = false;
+}
 
 function addAddr() {
-  if (inputAddr.value.length <= 0) {
-    // todo
+  const addr = inputAddr.value;
+  if (!Web3.utils.isAddress(addr)) {
+    Message({
+      message: '非法地址格式，添加失败!',
+      type: 'warning',
+    });
+
     return;
   }
 
   for (let i = 0; i < tableData.value.length; i++) {
     if (tableData.value[i].address === inputAddr.value) {
-      // todo
+      Message({
+        message: '地址已经在列表中，添加失败!',
+        type: 'info',
+      });
       return;
     }
   }
@@ -115,6 +140,11 @@ function addAddr() {
   });
 
   inputAddr.value = '';
+
+  Message({
+    message: '添加成功!',
+    type: 'success',
+  });
 }
 
 function deleteAddr(row) {
@@ -124,5 +154,24 @@ function deleteAddr(row) {
       return;
     }
   }
+}
+
+function importAddrs(file, data) {
+  const addrs = arrayBuffer2UTF8(data);
+  const addrList = addrs.split('\n');
+  addrList.forEach((addr) => {
+    if (!Web3.utils.isAddress(addr)) return;
+    for (let i = 0; i < tableData.value.length; i++) {
+      if (addr === tableData.value[i].address) return;
+    }
+    tableData.value.push({
+      address: addr,
+      balance: '',
+    });
+  });
+  Message({
+    message: `导入${file}成功!`,
+    type: 'success',
+  });
 }
 </script>
