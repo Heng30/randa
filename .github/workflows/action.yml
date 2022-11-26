@@ -16,7 +16,8 @@ jobs:
       - run: echo "start install node..."
       - run: sudo apt update
       - run: sudo apt install nodejs npm
-      - run: echo "end install Qt..."
+      - run: sudo apt install libdbus-1-dev pkg-config
+      - run: echo "end install node..."
 
       - run: echo "start install Rust..."
       - name: Install Rust
