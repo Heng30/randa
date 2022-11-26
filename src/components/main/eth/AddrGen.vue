@@ -76,7 +76,7 @@ import { ethers } from 'ethers';
 import { ref } from 'vue';
 import { Message } from 'element3';
 import { invoke } from '@tauri-apps/api/tauri';
-import { json2obj } from '../../../js/utils.js';
+import { json2obj} from '../../../js/utils.js';
 
 const addrCnt = ref(1);
 const tableData = ref([]);

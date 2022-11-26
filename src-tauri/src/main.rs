@@ -23,11 +23,13 @@ async fn main() {
     debug!("start...");
 
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![utils::rlog])
-        .invoke_handler(tauri::generate_handler![utils::config_dir])
-        .invoke_handler(tauri::generate_handler![utils::data_dir])
-        .invoke_handler(tauri::generate_handler![utils::write_file])
-        .invoke_handler(tauri::generate_handler![utils::write_file_2_tmp])
+        .invoke_handler(tauri::generate_handler![
+            utils::rlog,
+            utils::config_dir,
+            utils::data_dir,
+            utils::write_file,
+            utils::write_file_2_tmp
+        ])
         .plugin(tauri_plugin_sqlite::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

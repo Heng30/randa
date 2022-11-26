@@ -63,7 +63,7 @@
               >添加</el-button
             >
             <el-divider direction="vertical"></el-divider>
-            <el-tooltip content="提示: 每个地址占一行!" placement="top">
+            <el-tooltip content="提示: 每个地址占一行" placement="top">
               <FileDialog
                 @accept="importAddrs"
                 style="margin-left: 10px"
@@ -87,18 +87,47 @@
 
 <script setup>
 import { ethers } from 'ethers';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Message } from 'element3';
-//import { invoke } from '@tauri-apps/api/tauri';
-import Web3 from 'web3';
 import { arrayBuffer2UTF8 } from '../../../js/utils.js';
 import { ethNetwork } from '../../../js/store.js';
+import { ethAddrBalanceTable } from '../../../js/db.js';
 import FileDialog from '../../cbase/FileDialog.vue';
+import Web3 from 'web3';
 
 const currentNetwork = ref('homestead');
 const tableData = ref([]);
 const inputAddr = ref('');
 const isQuerying = ref(false);
+let addArray = [];
+let delArray = [];
+
+function _addDBCache(addr) {
+  if (addArray.indexOf(addr) === -1) {
+    addArray.push(addr);
+    let i = delArray.indexOf(addr);
+    if (i !== -1) delArray.splice(i, 1);
+  }
+}
+
+function _delDBCache(addr) {
+  if (delArray.indexOf(addr) === -1) {
+    delArray.push(addr);
+    let i = addArray.indexOf(addr);
+    if (i !== -1) addArray.splice(i, 1);
+  }
+}
+
+onMounted(async () => {
+  const addrs = await ethAddrBalanceTable.load();
+  if (!Array.isArray(addrs)) return;
+  addrs.forEach((item) => {
+    tableData.value.push({
+      address: item.address,
+      balance: '',
+    });
+  });
+});
 
 async function queryAddrsBalance() {
   let provider = ethers.getDefaultProvider(currentNetwork.value);
@@ -139,6 +168,7 @@ function addAddr() {
     balance: '',
   });
 
+  _addDBCache(inputAddr.value);
   inputAddr.value = '';
 
   Message({
@@ -151,6 +181,7 @@ function deleteAddr(row) {
   for (let i = 0; i < tableData.value.length; i++) {
     if (tableData.value[i].address === row.address) {
       tableData.value.splice(i, 1);
+      _delDBCache(row.address);
       return;
     }
   }
@@ -168,10 +199,22 @@ function importAddrs(file, data) {
       address: addr,
       balance: '',
     });
+    _addDBCache(addr);
   });
   Message({
     message: `导入${file}成功!`,
     type: 'success',
   });
+}
+
+function saveAddrs() {
+  ethAddrBalanceTable.delete(delArray);
+  ethAddrBalanceTable.insert(addArray);
+  Message({
+    message: '保存成功!',
+    type: 'success',
+  });
+  addArray = [];
+  delArray = [];
 }
 </script>

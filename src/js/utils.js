@@ -39,3 +39,11 @@ export const arrayBuffer2UTF8 = function (buffer) {
   const decoder = new TextDecoder();
   return decoder.decode(buffer);
 };
+
+export const arrayIndexOf = function (array, matchFunc) {
+    if (!Array.isArray(array) || !matchFunc) return;
+    for (let i = 0; i < array.length; i++) {
+        if (matchFunc(array[i])) return i;
+    }
+    return -1;
+}
