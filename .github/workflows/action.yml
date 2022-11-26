@@ -17,6 +17,7 @@ jobs:
       - run: sudo apt update
       - run: sudo apt install nodejs npm
       - run: sudo apt install libdbus-1-dev pkg-config
+      - run: sudo apt install libgtk-3-dev
       - run: echo "end install node..."
 
       - run: echo "start install Rust..."
