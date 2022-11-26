@@ -21,8 +21,8 @@
       "deb": {
           "depends": [],
           "files": {
-              "/usr/lib/README.md": "../README.md",
-              "/usr/lib/assets": "../public/"
+              "/usr/share/randa/README.md": "../README.md",
+              "/usr/share/randa/assets": "../public/"
           }
       },
       "externalBin": [],
@@ -60,8 +60,8 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "width": 800,
+        "height": 800,
+        "width": 1200,
         "resizable": true,
         "center": true,
         "title": "randa",
