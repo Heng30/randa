@@ -2,7 +2,7 @@
 import About from './About.vue';
 import EthAddrGen from './eth/AddrGen.vue';
 import EthAddrBalance from './eth/AddrBalance.vue';
-import EthSetting from './setting/Eth.vue';
+import EthSetting from './setting/eth/Eth.vue';
 import { navmenu } from '../../js/store.js';
 </script>
 

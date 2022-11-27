@@ -10,9 +10,9 @@
     "
   >
     <img src="../../assets/about.png" alt="about" style="margin-bottom: 6px" />
-    <div>{{ APP_VERSION }}</div>
+    <div>v{{ APP_VERSION }}</div>
     <div>
-      <span>Randa is created by </span>
+      <span>{{APP_NAME}} is created by </span>
       <el-tooltip :content="homeURL" placement="top">
         <span style="color: blue"> Heng30 </span>
       </el-tooltip>
@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { APP_VERSION } from '../../js/store.js';
+import { APP_VERSION, APP_NAME } from '../../js/store.js';
 import { ref } from 'vue';
 const githubURL = ref('https://github.com/Heng30/randa');
 const homeURL = ref('https://github.com/Heng30');

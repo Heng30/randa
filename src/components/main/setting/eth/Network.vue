@@ -25,12 +25,11 @@
       <el-table
         :data="tableData"
         style="width: 100%"
-        highlight-current-row
         stripe
       >
-        <el-table-column prop="name" label="名称" width="200">
+        <el-table-column prop="name" label="名称" width="250">
         </el-table-column>
-        <el-table-column prop="network" label="地址" width="500">
+        <el-table-column prop="network" label="地址" width="450">
         </el-table-column>
         <el-table-column align="right">
           <template v-slot="scope">
@@ -57,8 +56,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Message } from 'element3';
-import { ethNetwork } from '../../../js/store.js';
-import { ethNetworkTable } from '../../../js/db.js';
+import { ethNetwork } from '../../../../js/store.js';
+import { ethNetworkTable } from '../../../../js/db.js';
 
 const tableData = ethNetwork;
 const inputName = ref('');

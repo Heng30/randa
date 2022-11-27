@@ -1,15 +1,20 @@
 import { reactive } from 'vue';
 import { invoke } from '@tauri-apps/api/tauri';
+import { getName, getVersion } from '@tauri-apps/api/app';
 import { rlog } from '../js/utils.js';
 import { initDB } from './db.js';
 
 export let APP_DATA_DIR = '';
 export let APP_CONFIG_DIR = '';
-export const APP_VERSION = "v0.0.1";
+export let APP_VERSION = '';
+export let APP_NAME = '';
 
 export const initApp = async function () {
   APP_CONFIG_DIR = await invoke('config_dir');
   APP_DATA_DIR = await invoke('data_dir');
+  APP_NAME = await getName();
+  APP_VERSION = await getVersion();
+
   await initDB();
   rlog('init App successfully!');
 };

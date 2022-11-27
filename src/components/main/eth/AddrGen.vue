@@ -53,14 +53,7 @@
       </el-button>
     </div>
 
-    <el-table
-      :data="tableData"
-      style="width: 100%"
-      height="1000"
-      highlight-current-row
-      border
-      stripe
-    >
+    <el-table :data="tableData" style="width: 100%" height="1000" border stripe>
       <el-table-column prop="priKey" label="私钥" width="500">
       </el-table-column>
       <el-table-column prop="pubKey" label="公钥" width="500">
@@ -76,7 +69,8 @@ import { ethers } from 'ethers';
 import { ref } from 'vue';
 import { Message } from 'element3';
 import { invoke } from '@tauri-apps/api/tauri';
-import { json2obj} from '../../../js/utils.js';
+import { json2obj } from '../../../js/utils.js';
+import { open } from '@tauri-apps/api/dialog';
 
 const addrCnt = ref(1);
 const tableData = ref([]);
@@ -165,6 +159,21 @@ function genAddr() {
   }, 100);
 }
 
+/**
+// Open a selection dialog for directories
+const selected = await open({
+  directory: true,
+  multiple: false,
+});
+if (Array.isArray(selected)) {
+  // user selected multiple directories
+} else if (selected === null) {
+  // user cancelled the selection
+} else {
+  // user selected a single directory
+}
+*/
+
 async function exportAddr() {
   if (tableData.value.length <= 0) {
     Message({
@@ -187,10 +196,23 @@ async function exportAddr() {
       '\n';
   });
 
-  let jres = await invoke('write_file_2_tmp', {
-    filename: 'eth-addr.csv',
-    text: text,
+  const selected = await open({
+    directory: true,
+    multiple: false,
   });
+
+  let jres = '';
+  if (selected) {
+    jres = await invoke('write_file', {
+      filepath: selected + '/eth-addr.csv',
+      text: text,
+    });
+  } else {
+    jres = await invoke('write_file_2_tmp', {
+      filename: 'eth-addr.csv',
+      text: text,
+    });
+  }
 
   let res = await json2obj(jres);
   if (res) {
