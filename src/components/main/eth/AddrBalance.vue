@@ -29,7 +29,7 @@
 
       <el-button
         type="primary"
-        @click="queryAddrsBalance()"
+        @click="queryAddrsBalance"
         style="margin-left: 30px"
         :loading="isQuerying"
         >{{ isQuerying ? '正在查询' : '查询' }}</el-button
@@ -59,7 +59,7 @@
             <el-button
               type="primary"
               style="margin: 0 10px 0 30px"
-              @click="addAddr()"
+              @click="addAddr"
               >添加</el-button
             >
             <el-divider direction="vertical"></el-divider>
@@ -72,7 +72,7 @@
               </FileDialog>
             </el-tooltip>
 
-            <el-button type="primary" @click="saveAddrs()"> 保存 </el-button>
+            <el-button type="primary" @click="saveAddrs"> 保存 </el-button>
           </div>
         </template>
         <template v-slot="scope">

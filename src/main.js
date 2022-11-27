@@ -7,5 +7,6 @@ import { initApp } from './js/store.js';
 
 setTimeout(async () => {
   await initApp();
+
   createApp(App).use(Element3).mount('#app');
 }, 10);

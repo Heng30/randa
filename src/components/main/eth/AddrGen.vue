@@ -41,14 +41,14 @@
       <el-button
         :loading="isGenerating"
         type="primary"
-        @click="genAddr()"
+        @click="genAddr"
         style="margin: 0 10px 0 30px"
         >{{ isGenerating ? '正在生成地址' : '确定' }}
       </el-button>
 
       <el-divider direction="vertical"></el-divider>
 
-      <el-button type="primary" @click="exportAddr()" style="margin-left: 10px">
+      <el-button type="primary" @click="exportAddr" style="margin-left: 10px">
         导出为CSV
       </el-button>
     </div>

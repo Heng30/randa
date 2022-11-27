@@ -2,6 +2,12 @@
 import Header from './components/header/Header.vue';
 import Main from './components/main/Main.vue';
 import Footer from './components/footer/Footer.vue';
+import { uninitDB } from './js/db.js';
+import { onUnmounted } from 'vue';
+
+onUnmounted(async () => {
+  await uninitDB();
+});
 </script>
 
 <template>

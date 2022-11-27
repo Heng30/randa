@@ -5,6 +5,7 @@ import { initDB } from './db.js';
 
 export let APP_DATA_DIR = '';
 export let APP_CONFIG_DIR = '';
+export const APP_VERSION = "v0.0.1";
 
 export const initApp = async function () {
   APP_CONFIG_DIR = await invoke('config_dir');
@@ -21,30 +22,20 @@ export const navmenu = reactive({
   about: false,
 });
 
-//  - "homestead"
-//  - "rinkeby"
-//  - "ropsten"
-//  - "kovan"
-//  - "goerli"
-export const ethNetwork = reactive([
+export let ethNetwork = reactive([
   {
     name: 'Ethereum 主网',
     network: 'homestead',
+    disabled: true,
   },
   {
-    name: 'Rinkeby 测试网络',
-    network: 'rinkeby',
-  },
-  {
-    name: 'Ropsten 测试网络',
-    network: 'ropsten',
-  },
-  {
-    name: 'Kovan 测试网络',
-    network: 'kovan',
-  },
-  {
-    name: 'Goerli 测试网络',
+    name: 'Goerli 测试网',
     network: 'goerli',
+    disabled: true,
+  },
+  {
+    name: 'Ropsten 测试网',
+    network: 'ropsten',
+    disabled: true,
   },
 ]);

@@ -3,10 +3,11 @@
     :default-active="activeIndex"
     mode="horizontal"
     @select="handleSelect"
-    background-color="#545c64"
     text-color="#fff"
+    background-color="#545c64"
     active-text-color="#ffd04b"
     menu-trigger="click"
+    unique-opened
   >
     <el-submenu index="eth">
       <template v-slot:title>Ethereum</template>
@@ -24,7 +25,7 @@
 <style scope>
 .el-menu-item,
 .el-submenu__title {
-  font-size: 1.2em;
+  font-size: 1em;
 }
 </style>
 
