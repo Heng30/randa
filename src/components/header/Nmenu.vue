@@ -8,6 +8,7 @@
     active-text-color="#ffd04b"
     menu-trigger="click"
     unique-opened
+    style="flex: auto;"
   >
     <el-submenu index="eth">
       <template v-slot:title>Ethereum</template>

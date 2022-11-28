@@ -5,6 +5,8 @@ import Web3 from 'web3';
 let DB = null;
 
 export const initDB = async function () {
+  await uninitDB();
+
   const DB_PATH = APP_DATA_DIR + '/randa.db';
   DB = await SQLite.open(DB_PATH);
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_addr_balance (address TEXT UNIQUE NOT NULL);
@@ -14,7 +16,7 @@ export const initDB = async function () {
 };
 
 export const uninitDB = async function () {
-  await DB.close();
+    if (DB) await DB.close();
 };
 
 export const ethAddrBalanceTable = {

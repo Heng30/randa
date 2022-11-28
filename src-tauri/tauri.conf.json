@@ -44,7 +44,7 @@
       },
       "resources": [],
       "shortDescription": "",
-      "targets": "all",
+      "targets": "deb",
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
@@ -60,8 +60,7 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 800,
-        "width": 1500,
+        "maximized": true,
         "resizable": true,
         "center": true,
         "decorations": false

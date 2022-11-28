@@ -10,6 +10,8 @@
       cursor: move;
     "
     @mousedown="_mouseDown"
+    @mouseup="_mouseUp"
+    @mousemove="_mouseMove"
   ></div>
 </template>
 
@@ -24,11 +26,17 @@ let factor = 1.0;
 onMounted(async () => {
   factor = await appWindow.scaleFactor();
 
+  /*
+  document.addEventListener('mousemove', _mouseMove);
+  document.addEventListener('mouseup', _mouseUp);
   document.onmousemove = _mouseMove;
-  document.onmouseup = function() {
-    isPressed.value = false;
-  }
+  document.onmouseup = _mouseUp;
+  */
 });
+
+function _mouseUp(_event) {
+  isPressed.value = false;
+}
 
 function _mouseDown(event) {
   event = event || window.event;

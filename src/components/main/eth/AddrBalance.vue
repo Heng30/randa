@@ -36,13 +36,7 @@
       >
     </div>
 
-    <el-table
-      :data="tableData"
-      style="width: 100%"
-      height="1000"
-      border
-      stripe
-    >
+    <el-table :data="tableData" style="width: 100%" height="1000" border stripe>
       <el-table-column prop="address" label="地址" width="500">
       </el-table-column>
       <el-table-column prop="balance" label="余额" width="250">
@@ -134,9 +128,16 @@ async function queryAddrsBalance() {
   isQuerying.value = true;
   for (let i = 0; i < tableData.value.length; i++) {
     let addr = tableData.value[i].address;
-    let balance = await provider.getBalance(addr);
-    let ethStr = ethers.utils.formatEther(balance);
-    tableData.value[i].balance = Number(ethStr).toFixed(4) + ' Eth';
+    try {
+      let balance = await provider.getBalance(addr);
+      let ethStr = ethers.utils.formatEther(balance);
+      tableData.value[i].balance = Number(ethStr).toFixed(4) + ' Eth';
+    } catch (e) {
+      Message({
+        message: `${addr} 查询余额失败! 原因: ${e.toString()}`,
+        type: 'warning',
+      });
+    }
   }
   isQuerying.value = false;
 }

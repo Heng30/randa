@@ -1,8 +1,10 @@
 import { reactive } from 'vue';
 import { invoke } from '@tauri-apps/api/tauri';
 import { getName, getVersion } from '@tauri-apps/api/app';
+import { appWindow } from '@tauri-apps/api/window';
 import { rlog } from '../js/utils.js';
-import { initDB } from './db.js';
+import { initDB, uninitDB } from './db.js';
+import { initGlobalShortcut, uninitGlobalShortcut } from './gs.js';
 
 export let APP_DATA_DIR = '';
 export let APP_CONFIG_DIR = '';
@@ -15,8 +17,19 @@ export const initApp = async function () {
   APP_NAME = await getName();
   APP_VERSION = await getVersion();
 
+  appWindow.onCloseRequested(async (_event) => {
+    await uninitApp();
+  });
+
+  await initGlobalShortcut();
   await initDB();
   rlog('init App successfully!');
+};
+
+export const uninitApp = async function () {
+  await uninitGlobalShortcut();
+  await uninitDB();
+  rlog('uninit App successfully!');
 };
 
 export const navmenu = reactive({
