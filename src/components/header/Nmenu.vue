@@ -14,6 +14,8 @@
       <template v-slot:title>Ethereum</template>
       <el-menu-item index="ethAddrGen">地址生成</el-menu-item>
       <el-menu-item index="ethAddrBalance">余额查询</el-menu-item>
+      <el-menu-item index="ethHistoryTransaction">交易历史</el-menu-item>
+      <el-menu-item index="ethTool">常用工具</el-menu-item>
     </el-submenu>
     <el-submenu index="setting">
       <template v-slot:title>设置</template>

@@ -82,7 +82,10 @@
 import { ethers } from 'ethers';
 import { ref, onMounted } from 'vue';
 import { Message } from 'element3';
-import { arrayBuffer2UTF8 } from '../../../js/utils.js';
+import {
+  arrayBuffer2UTF8,
+  ethProvider,
+} from '../../../js/utils.js';
 import { ethNetwork } from '../../../js/store.js';
 import { ethAddrBalanceTable } from '../../../js/db.js';
 import FileDialog from '../../cbase/FileDialog.vue';
@@ -123,9 +126,11 @@ onMounted(async () => {
 });
 
 async function queryAddrsBalance() {
-  let provider = ethers.getDefaultProvider(currentNetwork.value);
-
+  let provider = ethProvider(currentNetwork.value);
   isQuerying.value = true;
+  for (let i = 0; i < tableData.value.length; i++) {
+    tableData.value[i].balance = '';
+  }
   for (let i = 0; i < tableData.value.length; i++) {
     let addr = tableData.value[i].address;
     try {
@@ -139,7 +144,12 @@ async function queryAddrsBalance() {
       });
     }
   }
+
   isQuerying.value = false;
+  Message({
+    message: '查询余额成功!',
+    type: 'success',
+  });
 }
 
 function addAddr() {

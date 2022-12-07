@@ -8,12 +8,10 @@
       overflow-x: scroll;
     "
   >
-    <Network />
-    <APIKey />
+    <ENS />
   </div>
 </template>
 
 <script setup>
-import Network from './Network.vue';
-import APIKey from './APIKey.vue';
+import ENS from './ENS.vue';
 </script>

@@ -32,11 +32,14 @@ export const uninitApp = async function () {
   rlog('uninit App successfully!');
 };
 
+
 export const navmenu = reactive({
   selectedPage: 'ethAddrGen',
   ethAddrGen: true,
   ethAddrBalance: false,
   ethSetting: false,
+  ethTool: false,
+  ethHistoryTransaction: false,
   about: false,
 });
 
@@ -51,9 +54,12 @@ export let ethNetwork = reactive([
     network: 'goerli',
     disabled: true,
   },
-  {
-    name: 'Ropsten 测试网',
-    network: 'ropsten',
-    disabled: true,
-  },
 ]);
+
+export let ethProviderAPIKey = reactive({
+  etherscan: null,
+  infura: null,
+  alchemy: null,
+  pocket: null,
+  ankr: null,
+});

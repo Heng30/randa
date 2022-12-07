@@ -159,21 +159,6 @@ function genAddr() {
   }, 100);
 }
 
-/**
-// Open a selection dialog for directories
-const selected = await open({
-  directory: true,
-  multiple: false,
-});
-if (Array.isArray(selected)) {
-  // user selected multiple directories
-} else if (selected === null) {
-  // user cancelled the selection
-} else {
-  // user selected a single directory
-}
-*/
-
 async function exportAddr() {
   if (tableData.value.length <= 0) {
     Message({
