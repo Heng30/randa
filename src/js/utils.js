@@ -67,14 +67,40 @@ export const ethProvider = function (network) {
   return provider;
 };
 
+export const ethScanProvider = function () {
+  if (ethProviderAPIKey.etherscan) {
+    return new ethers.providers.EtherscanProvider(
+      'homestead',
+      ethProviderAPIKey.etherscan
+    );
+  } else {
+    return new ethers.providers.EtherscanProvider();
+  }
+};
+
 export const isEthPubNet = function (network) {
   return network === 'homestead' || network === 'goerli';
 };
 
-export const isValidENS = function(value) {
-    return String(value).trim().endsWith('.eth');
-}
+export const isValidENS = function (value) {
+  return String(value).trim().endsWith('.eth');
+};
 
-export const isValidEthAddr = function(addr) {
+export const isValidEthAddr = function (addr) {
   return Web3.utils.isAddress(addr);
-}
+};
+
+export const timeFormat = function (timestamp) {
+  const formatValue = (value) => {
+    return value < 10 ? '0' + value : String(value);
+  };
+  const date = new Date(timestamp * 1000);
+  const Y = date.getFullYear();
+  const M = formatValue(date.getMonth() + 1);
+  const D = formatValue(date.getDate());
+  const h = formatValue(date.getHours());
+  const m = formatValue(date.getMinutes());
+  const s = formatValue(date.getSeconds());
+
+  return Y + '-' + M + '-' + D + ' ' + h + ':' + m + ':' + s;
+};

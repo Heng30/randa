@@ -1,6 +1,6 @@
 <template>
   <div style="height: 100%; display: flex">
-    <el-card style="width: 800px" :body-style="{ padding: '4px', margin: '4px' }">
+    <el-card style="width: 800px" :body-style="{ padding: '8px' }">
       <template v-slot:header>
         <span>Ethereum API Key 配置</span>
       </template>
@@ -26,7 +26,10 @@
           style="display: inline-block"
         />
 
-        <el-button type="primary" style="margin: 0 4px 0 10px" @click="addProvider"
+        <el-button
+          type="primary"
+          style="margin: 0 4px 0 10px"
+          @click="addProvider"
           >添加</el-button
         >
       </div>
@@ -34,7 +37,7 @@
       <el-table :data="tableData" style="width: 100%" stripe>
         <el-table-column prop="name" label="供应商" width="160">
         </el-table-column>
-        <el-table-column prop="apikey" label="API Key" width="450">
+        <el-table-column prop="apikey" label="API Key" width="540">
         </el-table-column>
         <el-table-column align="right">
           <template v-slot="scope">

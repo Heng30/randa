@@ -1,7 +1,7 @@
 <template>
   <div
     style="
-      width: 100%;
+      width: calc(100% - 8px);
       height: 100%;
       margin: 4px;
       display: flex;
@@ -20,7 +20,7 @@
       <el-select
         v-model="mneByteCnt"
         placeholder="请选择组记词长度"
-        style="margin-right: 30px"
+        style="margin-right: 10px"
       >
         <el-option
           v-for="item in mneCntOpt"
@@ -32,9 +32,9 @@
       </el-select>
 
       <el-input
-        placeholder="请输入地址数"
+        placeholder="请输入地址数, 最多10个地址"
         v-model="addrCnt"
-        style="width: 150px"
+        style="width: 250px"
       >
       </el-input>
 
@@ -42,7 +42,7 @@
         :loading="isGenerating"
         type="primary"
         @click="genAddr"
-        style="margin: 0 10px 0 30px"
+        style="margin: 0 10px"
         >{{ isGenerating ? '正在生成地址' : '确定' }}
       </el-button>
 
@@ -53,7 +53,7 @@
       </el-button>
     </div>
 
-    <el-table :data="tableData" style="width: 100%" height="1000" border stripe>
+    <el-table :data="tableData" style="width: 100%; margin-bottom: 10px" height="1000" border stripe>
       <el-table-column prop="priKey" label="私钥" width="500">
       </el-table-column>
       <el-table-column prop="pubKey" label="公钥" width="500">
@@ -75,6 +75,7 @@ import { open } from '@tauri-apps/api/dialog';
 const addrCnt = ref(1);
 const tableData = ref([]);
 const isGenerating = ref(false);
+const maxAddrCnt = 10;
 
 // Chose the length of your mnemonic:
 //   - 16 bytes => 12 words
@@ -123,9 +124,9 @@ function genAddr() {
     return;
   }
 
-  if (Number(addrCnt.value) > 50) {
+  if (Number(addrCnt.value) > maxAddrCnt) {
     Message({
-      message: '警告: 一次最多只能生成50个地址!',
+      message: `警告: 一次最多只能生成${maxAddrCnt}个地址!`,
       type: 'warning',
     });
     return;
@@ -186,37 +187,31 @@ async function exportAddr() {
     multiple: false,
   });
 
-  let jres = '';
   if (selected) {
-    jres = await invoke('write_file', {
+    let jres = await invoke('write_file', {
       filepath: selected + '/eth-addr.csv',
       text: text,
     });
-  } else {
-    jres = await invoke('write_file_2_tmp', {
-      filename: 'eth-addr.csv',
-      text: text,
-    });
-  }
 
-  let res = await json2obj(jres);
-  if (res) {
-    if (res.code === 0) {
-      Message({
-        message: '保存成功! 文件路径: ' + res.msg,
-        type: 'success',
-      });
+    let res = await json2obj(jres);
+    if (res) {
+      if (res.code === 0) {
+        Message({
+          message: '保存成功! 文件路径: ' + res.msg,
+          type: 'success',
+        });
+      } else {
+        Message({
+          message: '保存文件失败! 原因:' + res.msg,
+          type: 'warning',
+        });
+      }
     } else {
       Message({
-        message: '保存文件失败! 原因:' + res.msg,
+        message: '保存文件失败! 原因未知!',
         type: 'warning',
       });
     }
-  } else {
-    Message({
-      message: '保存文件失败! 原因未知!',
-      type: 'warning',
-    });
   }
 }
 </script>

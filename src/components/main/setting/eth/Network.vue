@@ -1,6 +1,6 @@
 <template>
   <div style="height: 100%; display: flex">
-    <el-card style="width: 800px" :body-style="{ padding: '4px', margin: '4px' }">
+    <el-card style="width: 800px" :body-style="{ padding: '8px' }">
       <template v-slot:header>
         <span>Ethereum 网络配置</span>
       </template>
@@ -17,16 +17,15 @@
           style="display: inline-block"
         />
 
-        <el-button type="primary" style="margin: 0 4px 0 10px" @click="addNetwork"
+        <el-button
+          type="primary"
+          style="margin: 0 4px 0 10px"
+          @click="addNetwork"
           >添加</el-button
         >
       </div>
 
-      <el-table
-        :data="tableData"
-        style="width: 100%"
-        stripe
-      >
+      <el-table :data="tableData" style="width: 100%" stripe>
         <el-table-column prop="name" label="名称" width="250">
         </el-table-column>
         <el-table-column prop="network" label="地址" width="450">

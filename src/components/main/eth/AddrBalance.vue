@@ -1,7 +1,7 @@
 <template>
   <div
     style="
-      width: 100%;
+      width: calc(100% - 8px);
       height: 100%;
       margin: 4px;
       display: flex;
@@ -30,13 +30,14 @@
       <el-button
         type="primary"
         @click="queryAddrsBalance"
-        style="margin-left: 30px"
+        style="margin-left: 10px"
+        icon="el-icon-search"
         :loading="isQuerying"
-        >{{ isQuerying ? '正在查询' : '查询' }}</el-button
+        >查询</el-button
       >
     </div>
 
-    <el-table :data="tableData" style="width: 100%" height="1000" border stripe>
+    <el-table :data="tableData" style="width: 100%; margin-bottom: 10px" height="1000" border stripe>
       <el-table-column prop="address" label="地址" width="500">
       </el-table-column>
       <el-table-column prop="balance" label="余额" width="250">
@@ -51,7 +52,7 @@
             />
             <el-button
               type="primary"
-              style="margin: 0 10px 0 30px"
+              style="margin: 0 10px"
               @click="addAddr"
               >添加</el-button
             >
