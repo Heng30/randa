@@ -1,6 +1,6 @@
 <script setup>
 import About from './About.vue';
-import EthWallet from './eth/Wallet.vue';
+import EthWallet from './eth/wallet/Wallet.vue';
 import EthAddrGen from './eth/AddrGen.vue';
 import EthAddrBalance from './eth/AddrBalance.vue';
 import EthTool from './eth/tool/Tool.vue';

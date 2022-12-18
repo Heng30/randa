@@ -11,9 +11,17 @@ export const initDB = async function () {
   DB = await SQLite.open(DB_PATH);
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_addr_balance (address TEXT UNIQUE NOT NULL);
 `);
+
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_network (name TEXT UNIQUE NOT NULL, network TEXT UNIQUE NOT NULL, disabled INT NOT NULL);
 `);
+
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_provider_apikey (name TEXT UNIQUE NOT NULL, apikey TEXT UNIQUE NOT NULL);
+`);
+
+  await DB.execute(`CREATE TABLE IF NOT EXISTS wallet_info (name TEXT UNIQUE NOT NULL, password TEXT NOT NULL, mnemonic TEXT NOT NULL, privateKey TEXT NOT NULL, encryptWallet TEXT NOT NULL, publicKey TEXT NOT NULL, address TEXT NOT NULL);
+`);
+
+  await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT UNIQUE NOT NULL, tokenAddr TEXT UNIQUE NOT NULL, amount TEXT NOT NULL);
 `);
 
   await initEthProviderAPIKey();
@@ -79,6 +87,52 @@ export const ethProviderAPIKeyTable = {
   delete: async function (item) {
     await DB.execute(`DELETE FROM eth_provider_apikey WHERE name=($1)`, [
       item.name,
+    ]);
+  },
+};
+
+export const walletInfoTable = {
+  load: async function (name) {
+    let rows = await DB.select(`SELECT * FROM wallet_info WHERE name=($1)`, [
+      name,
+    ]);
+    return rows;
+  },
+  insert: async function (item) {
+    await DB.execute(
+      `INSERT INTO wallet_info VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        item.name,
+        item.password,
+        item.mnemonic,
+        item.privateKey,
+        item.encryptWallet,
+        item.publicKey,
+        item.address,
+      ]
+    );
+  },
+  delete: async function (name) {
+    await DB.execute(`DELETE FROM wallet_info WHERE name=($1)`, [name]);
+  },
+};
+
+export const ethWalletInfoTable = {
+  load: async function () {
+    let rows = await DB.select('SELECT * FROM eth_wallet_info');
+    return rows;
+  },
+
+  insert: async function (item) {
+    await DB.execute(`INSERT INTO eth_wallet_info VALUES ($1, $2, $3)`, [
+      item.tokenName,
+      item.tokenAddr,
+      item.amount,
+    ]);
+  },
+  delete: async function (item) {
+    await DB.execute(`DELETE FROM eth_wallet_info WHERE name=($1)`, [
+      item.tokenName,
     ]);
   },
 };

@@ -8,7 +8,7 @@
       border-top: 2px groove lightblue;
     "
   >
-    <span class="lable-item">Eth油费: {{ ethGasPrice }}Gwei</span>
+    <span class="lable-item">以太坊油费: {{ ethGasPrice }}Gwei</span>
   </div>
 </template>
 
