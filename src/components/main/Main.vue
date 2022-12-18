@@ -1,5 +1,6 @@
 <script setup>
 import About from './About.vue';
+import EthWallet from './eth/Wallet.vue';
 import EthAddrGen from './eth/AddrGen.vue';
 import EthAddrBalance from './eth/AddrBalance.vue';
 import EthTool from './eth/tool/Tool.vue';
@@ -12,6 +13,7 @@ import { navmenu } from '../../js/store.js';
   <div
     style="background-color: white; height: 100%; width: 100%; overflow: hidden"
   >
+    <EthWallet v-show="navmenu.ethWallet" />
     <EthAddrGen v-show="navmenu.ethAddrGen" />
     <EthAddrBalance v-show="navmenu.ethAddrBalance" />
     <EthSetting v-show="navmenu.ethSetting" />

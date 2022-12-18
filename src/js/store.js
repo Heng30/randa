@@ -32,10 +32,10 @@ export const uninitApp = async function () {
   rlog('uninit App successfully!');
 };
 
-
 export const navmenu = reactive({
-  selectedPage: 'ethAddrGen',
-  ethAddrGen: true,
+  selectedPage: 'ethWallet',
+  ethWallet: true,
+  ethAddrGen: false,
   ethAddrBalance: false,
   ethSetting: false,
   ethTool: false,

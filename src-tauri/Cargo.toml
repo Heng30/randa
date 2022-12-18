@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "A Tauri App under developement"
 authors = ["heng30"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/Heng30/randa"
 edition = "2021"
 keywords = ["tauri", "element3", "Rust", "Vu3",]
 
