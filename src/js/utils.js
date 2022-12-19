@@ -3,6 +3,7 @@ import * as Comlink from 'comlink';
 import { ethProviderAPIKey } from './store';
 import { ethers } from 'ethers';
 import Web3 from 'web3';
+import CryptoJS from 'crypto-js';
 
 export const rlog = async function (text) {
   if (typeof text !== 'string') return;
@@ -104,3 +105,25 @@ export const timeFormat = function (timestamp) {
 
   return Y + '-' + M + '-' + D + ' ' + h + ':' + m + ':' + s;
 };
+
+export const aseEncrypt = function(password, plainText) {
+    const iv = CryptoJS.MD5(password).toString();
+    const encText = CryptoJS.AES.encrypt(plainText, password, {
+        iv: CryptoJS.enc.Hex.parse(iv),
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+    })
+
+    return encText.toString();
+}
+
+export const aseDecrypt = function(password, encText) {
+    const iv = CryptoJS.MD5(password).toString();
+    const decText = CryptoJS.AES.decrypt(encText, password, {
+        iv: CryptoJS.enc.Hex.parse(iv),
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+    })
+
+    return decText.toString(CryptoJS.enc.Utf8);
+}

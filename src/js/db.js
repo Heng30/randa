@@ -18,7 +18,7 @@ export const initDB = async function () {
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_provider_apikey (name TEXT UNIQUE NOT NULL, apikey TEXT UNIQUE NOT NULL);
 `);
 
-  await DB.execute(`CREATE TABLE IF NOT EXISTS wallet_info (name TEXT UNIQUE NOT NULL, password TEXT NOT NULL, mnemonic TEXT NOT NULL, privateKey TEXT NOT NULL, encryptWallet TEXT NOT NULL, publicKey TEXT NOT NULL, address TEXT NOT NULL);
+  await DB.execute(`CREATE TABLE IF NOT EXISTS wallet_info (name TEXT UNIQUE NOT NULL, password TEXT NOT NULL, mnemonic TEXT NOT NULL, privateKey TEXT NOT NULL, publicKey TEXT NOT NULL, address TEXT NOT NULL);
 `);
 
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT UNIQUE NOT NULL, tokenAddr TEXT UNIQUE NOT NULL, amount TEXT NOT NULL);
@@ -100,13 +100,12 @@ export const walletInfoTable = {
   },
   insert: async function (item) {
     await DB.execute(
-      `INSERT INTO wallet_info VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      `INSERT INTO wallet_info VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         item.name,
         item.password,
         item.mnemonic,
         item.privateKey,
-        item.encryptWallet,
         item.publicKey,
         item.address,
       ]

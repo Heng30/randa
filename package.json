@@ -12,6 +12,7 @@
   "dependencies": {
     "@tauri-apps/api": "^1.1.0",
     "comlink": "^4.3.1",
+    "crypto-js": "^4.1.1",
     "element3": "^0.0.40",
     "ethers": "^5.7.2",
     "tauri-plugin-sqlite-api": "github:lzdyes/tauri-plugin-sqlite#v0.1.1",

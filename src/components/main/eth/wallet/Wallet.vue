@@ -163,6 +163,8 @@ import { ethNetwork } from '../../../../js/store.js';
 import { walletInfoTable, ethWalletInfoTable } from '../../../../js/db.js';
 import { writeText } from '@tauri-apps/api/clipboard';
 import GenWallet from './GenWallet.vue';
+import CryptoJS from 'crypto-js';
+import { aseDecrypt } from '../../../../js/utils.js';
 
 const walletAddrDefault = '请先导入地址';
 const networkName = 'Ethereum';
@@ -219,8 +221,21 @@ onMounted(async () => {
   }
 });
 
-function  setWalletAddr(addr) {
-    walletAddr.value = addr;
+function setWalletAddr(addr) {
+  walletAddr.value = addr;
+}
+
+async function _newWallet() {
+  let password = await _checkPassword();
+  if (!password) return null;
+
+  let item = await walletInfoTable.load(networkName);
+  if (item.length === 1) {
+    const privateKey = aseDecrypt(password, item[0].privateKey);
+    return new ethers.Wallet(privateKey);
+  }
+
+  return null;
 }
 
 async function _newPassword() {
@@ -229,7 +244,7 @@ async function _newPassword() {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     inputPattern: /^\S{8,}$/,
-    inputErrorMessage: '密码至少8位',
+    inputPlaceholder: '至少8位数字或字母',
   })
     .then(async ({ value }) => {
       password = value;
@@ -240,10 +255,13 @@ async function _newPassword() {
 }
 
 async function _checkPassword() {
-  let passChecked = false;
+  let password = '';
   await Msgbox.prompt('', '请输入密码', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
+    inputType: 'password',
+    inputPattern: /^\S{8,}$/,
+    inputPlaceholder: '至少8位数字或字母',
   })
     .then(async ({ value }) => {
       let item = await walletInfoTable.load(networkName);
@@ -255,8 +273,7 @@ async function _checkPassword() {
         return;
       }
 
-      value = ethers.utils.sha256(value);
-      if (value !== item[0].password) {
+      if (CryptoJS.MD5(value).toString() !== item[0].password) {
         Message({
           message: '警告：密码错误!',
           type: 'warning',
@@ -264,11 +281,11 @@ async function _checkPassword() {
         return;
       }
 
-      passChecked = true;
+      password = value;
     })
     .catch(() => {});
 
-  return passChecked;
+  return password;
 }
 
 async function importWallet() {
@@ -277,7 +294,7 @@ async function importWallet() {
       message: '警告：请先重置钱包!',
       type: 'warning',
     });
-    retrun;
+    return;
   }
 
   let password = await _newPassword();
@@ -296,7 +313,7 @@ async function resetWallet() {
     return;
   }
 
-  await _checkPassword();
+  if (!(await _checkPassword())) return;
   await walletInfoTable.delete(networkName);
   walletAddr.value = walletAddrDefault;
 
@@ -306,7 +323,13 @@ async function resetWallet() {
   });
   return;
 }
-async function refreshTableInfo() {}
+
+async function refreshTableInfo() {
+  const wallet = await _newWallet();
+  if (!wallet) return;
+  // console.log(wallet);
+  // TODO
+}
 
 async function importToken() {
   let tokenName = inputImportTokenName.value;
