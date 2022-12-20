@@ -134,6 +134,12 @@ export const ethWalletInfoTable = {
       item.tokenName,
     ]);
   },
+  update: async function (item) {
+    await DB.execute(`UPDATE eth_wallet_info SET amount=($1) WHERE name=($2)`, [
+      item.amount,
+      item.tokenName,
+    ]);
+  },
 };
 
 const initEthProviderAPIKey = async function () {

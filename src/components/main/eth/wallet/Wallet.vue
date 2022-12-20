@@ -95,8 +95,6 @@
             style="margin-left: 10px"
             >添加</el-button
           >
-          <el-divider direction="vertical" style="margin: 0 10px"></el-divider>
-          <el-button type="primary" @click="saveTableInfo">保存</el-button>
           <el-button
             type="primary"
             @click="refreshTableInfo"
@@ -118,6 +116,11 @@
                 placeholder="代币数量"
                 style="width: 100px; margin-right: 10px"
               />
+              <el-input
+                v-model="inputGasFee"
+                placeholder="油费"
+                style="width: 60px; margin-right: 10px"
+              />
 
               <el-button
                 type="primary"
@@ -127,7 +130,7 @@
                 {{ scope.row.isSending ? '正在发送' : '确定' }}</el-button
               >
               <el-button
-                type="danger"
+                type="info"
                 @click="cancelSendToken(scope.row)"
                 :disabled="scope.row.isSending"
                 >取消</el-button
@@ -156,9 +159,9 @@
 
 <script setup>
 import { ethers } from 'ethers';
-import { ref, onMounted, defineExpose } from 'vue';
+import { ref, onMounted, h } from 'vue';
 import { Msgbox, Message } from 'element3';
-import { isValidEthAddr } from '../../../../js/utils.js';
+import { isValidEthAddr, ethProvider, rlog } from '../../../../js/utils.js';
 import { ethNetwork } from '../../../../js/store.js';
 import { walletInfoTable, ethWalletInfoTable } from '../../../../js/db.js';
 import { writeText } from '@tauri-apps/api/clipboard';
@@ -171,38 +174,34 @@ const networkName = 'Ethereum';
 
 const currentNetwork = ref('homestead');
 const walletAddr = ref(walletAddrDefault);
-const inputRecvAddr = ref('');
-const inputSendAmount = ref('');
 const inputImportTokenName = ref('');
 const inputImportTokenAddr = ref('');
 const isRefreshingTableInfo = ref(false);
 const genWalletDialog = ref(null);
 
-const tableData = ref([
-  {
-    tokenName: 'ETH',
-    tokenAddr: 'N/A',
-    amount: '0',
-    status: 'N/A',
-    isSendToken: false,
-    isSending: false,
-    canDelete: false,
-  },
-  {
-    tokenName: 'USDT',
-    tokenAddr: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    amount: '0',
-    status: 'N/A',
-    isSendToken: false,
-    isSending: false,
-    canDelete: false,
-  },
-]);
+let isBusySending = false;
+const inputRecvAddr = ref('');
+const inputSendAmount = ref('');
+const inputGasFee = ref('10');
+
+const tableData = ref([]);
+
+async function _initDB() {
+  try {
+    await ethWalletInfoTable.insert({
+      tokenName: 'ETH',
+      tokenAddr: 'N/A',
+      amount: 'N/A',
+    });
+  } catch (_) {}
+}
 
 onMounted(async () => {
+  await _initDB();
+
   let tdata = await ethWalletInfoTable.load();
   if (Array.isArray(tdata)) {
-    tdata.forEach((item) => {
+    tdata.forEach((item, index) => {
       tableData.value.push({
         tokenName: item.name,
         tokenAddr: item.tokenAddr,
@@ -210,7 +209,7 @@ onMounted(async () => {
         status: 'N/A',
         isSendToken: false,
         isSending: false,
-        canDelete: true,
+        canDelete: index !== 0,
       });
     });
   }
@@ -232,7 +231,8 @@ async function _newWallet() {
   let item = await walletInfoTable.load(networkName);
   if (item.length === 1) {
     const privateKey = aseDecrypt(password, item[0].privateKey);
-    return new ethers.Wallet(privateKey);
+    const provider = ethProvider(currentNetwork.value);
+    return new ethers.Wallet(privateKey, provider);
   }
 
   return null;
@@ -265,12 +265,12 @@ async function _checkPassword() {
   })
     .then(async ({ value }) => {
       let item = await walletInfoTable.load(networkName);
-      if (item.length != 1) {
+      if (item.length !== 1) {
         Message({
           message: '警告：数据库出错，请重启程序!',
           type: 'warning',
         });
-        return;
+        return password;
       }
 
       if (CryptoJS.MD5(value).toString() !== item[0].password) {
@@ -278,7 +278,7 @@ async function _checkPassword() {
           message: '警告：密码错误!',
           type: 'warning',
         });
-        return;
+        return password;
       }
 
       password = value;
@@ -324,27 +324,41 @@ async function resetWallet() {
   return;
 }
 
+async function _updateEthAmount(wallet) {
+  const balance = await wallet.getBalance();
+  tableData.value[0].amount = Number(ethers.utils.formatEther(balance)).toFixed(
+    4
+  );
+  ethWalletInfoTable.update(tableData.value[0]);
+}
+
+async function _updateTokenAmount(wallet) {
+  // TODO
+}
+
 async function refreshTableInfo() {
   const wallet = await _newWallet();
   if (!wallet) return;
-  // console.log(wallet);
-  // TODO
+
+  isRefreshingTableInfo.value = true;
+  try {
+    await _updateEthAmount(wallet);
+    await _updateTokenAmount(wallet);
+  } catch (e) {
+    rlog(e.toString());
+  }
+  isRefreshingTableInfo.value = false;
 }
 
 async function importToken() {
   let tokenName = inputImportTokenName.value;
   let tokenAddr = inputImportTokenAddr.value;
-  let amount = '0';
-  if (!isValidEthAddr(tokenAddr)) {
+  if (tokenName.length <= 0 || !isValidEthAddr(tokenAddr)) {
     Message({
-      message: '警告：代币地址非法!',
+      message: '警告：代币名称为空或代币地址非法!',
       type: 'warning',
     });
     return;
-  }
-
-  if (tokenName.length <= 0) {
-    // TODO: get token name
   }
 
   for (let i = 0; i < tableData.value.length; i++) {
@@ -360,12 +374,10 @@ async function importToken() {
     }
   }
 
-  //TODO: get token amount
-
   let item = {
     tokenName: tokenName,
     tokenAddr: tokenAddr,
-    amount: amount,
+    amount: 'N/A',
     status: 'N/A',
     isSendToken: false,
     isSending: false,
@@ -386,18 +398,24 @@ async function importToken() {
 async function deleteToken(row) {
   for (let i = 0; i < tableData.value.length; i++) {
     if (tableData.value[i].tokenName === row.tokenName) {
-      await ethWalletInfoTable.delete(tableData.value[i]);
-      tableData.value.splice(i, 1);
-      Message({
-        message: '删除成功!',
-        type: 'success',
-      });
-      return;
+      Msgbox.confirm('是否删除该代币?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      })
+        .then(async () => {
+          await ethWalletInfoTable.delete(tableData.value[i]);
+          tableData.value.splice(i, 1);
+          Message({
+            message: '删除成功!',
+            type: 'success',
+          });
+        })
+        .catch(() => {});
     }
   }
 }
 
-function saveTableInfo() {}
 async function copyWalletAddr() {
   await writeText(walletAddr.value);
   Message({
@@ -416,7 +434,60 @@ function showSendLayout(row) {
   }
 }
 
-function sendToken(row) {
+async function _transaction(item) {
+  const recvAddr = inputRecvAddr.value;
+  const sendAmount = inputSendAmount.value;
+  const gasFee = inputGasFee.value;
+
+  if (
+    !isValidEthAddr(recvAddr) ||
+    isNaN(Number(sendAmount)) ||
+    Number(sendAmount) <= 0 ||
+    isNaN(Number(gasFee)) ||
+    Number(gasFee) <= 0
+  ) {
+    Message({
+      message: '警告：交易数据非法，请检查!',
+      type: 'warning',
+    });
+    return;
+  }
+
+  await Msgbox({
+    title: '请确认交易信息',
+    message: h('div', null, [
+      h('div', null, [
+        h('span', null, '接收地址: '),
+        h(
+          'span',
+          { style: 'font-size: 0.7em; font-weight: bold' },
+          `${recvAddr}`
+        ),
+      ]),
+      h('p', null, `发送数量: ${sendAmount}`),
+      h('p', null, `交易油费: ${gasFee}Gwei`),
+    ]),
+    showCancelButton: true,
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  })
+    .then(async () => {
+      const wallet = await _newWallet();
+      if (!wallet) return;
+      // TODO: send token
+    })
+    .catch(() => {});
+}
+
+async function sendToken(row) {
+  if (isBusySending) {
+    Message({
+      message: '警告：正在进行交易，请稍后再试!',
+      type: 'warning',
+    });
+    return;
+  }
+
   let data = tableData.value;
   let item = null;
   for (let i = 0; i < data.length; i++) {
@@ -428,9 +499,12 @@ function sendToken(row) {
   }
 
   if (!item) return;
+
+  isBusySending = true;
   item.isSending = true;
-  // TODO: send token
+  _transaction(item);
   item.isSending = false;
+  isBusySending = false;
 }
 
 function cancelSendToken(row) {
