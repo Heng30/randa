@@ -116,11 +116,6 @@
                 placeholder="代币数量"
                 style="width: 100px; margin-right: 10px"
               />
-              <el-input
-                v-model="inputGasFee"
-                placeholder="油费"
-                style="width: 60px; margin-right: 10px"
-              />
 
               <el-button
                 type="primary"
@@ -162,7 +157,7 @@ import { ethers } from 'ethers';
 import { ref, onMounted, h } from 'vue';
 import { Msgbox, Message } from 'element3';
 import { isValidEthAddr, ethProvider, rlog } from '../../../../js/utils.js';
-import { ethNetwork } from '../../../../js/store.js';
+import { ethNetwork, chainGasPrice } from '../../../../js/store.js';
 import { walletInfoTable, ethWalletInfoTable } from '../../../../js/db.js';
 import { writeText } from '@tauri-apps/api/clipboard';
 import GenWallet from './GenWallet.vue';
@@ -182,7 +177,8 @@ const genWalletDialog = ref(null);
 let isBusySending = false;
 const inputRecvAddr = ref('');
 const inputSendAmount = ref('');
-const inputGasFee = ref('10');
+const inputGasPrice = ref('10');
+const inputGasLimit = ref('2100');
 
 const tableData = ref([]);
 
@@ -324,30 +320,55 @@ async function resetWallet() {
   return;
 }
 
-async function _updateEthAmount(wallet) {
-  const balance = await wallet.getBalance();
-  tableData.value[0].amount = Number(ethers.utils.formatEther(balance)).toFixed(
-    4
-  );
-  ethWalletInfoTable.update(tableData.value[0]);
-}
-
-async function _updateTokenAmount(wallet) {
-  // TODO
-}
-
-async function refreshTableInfo() {
-  const wallet = await _newWallet();
-  if (!wallet) return;
-
-  isRefreshingTableInfo.value = true;
+async function _updateEthAmount(provider) {
   try {
-    await _updateEthAmount(wallet);
-    await _updateTokenAmount(wallet);
+    const balance = await provider.getBalance(walletAddr.value);
+    tableData.value[0].amount = Number(
+      ethers.utils.formatEther(balance)
+    ).toFixed(4);
+    ethWalletInfoTable.update(tableData.value[0]);
   } catch (e) {
     rlog(e.toString());
   }
+}
+
+async function _updateTokenAmount(provider) {
+  const abi = ['function balanceOf(address owner) view returns (uint256)'];
+
+  for (let i = 1; i < tableData.value.length; i++) {
+    const address = tableData.value[i].tokenAddr;
+    try {
+      const erc20 = new ethers.Contract(address, abi, provider);
+      const balance = await erc20.balanceOf(walletAddr.value);
+      tableData.value[i].amount = Number(
+        ethers.utils.formatEther(balance)
+      ).toFixed(4);
+      ethWalletInfoTable.update(tableData.value[i]);
+    } catch (e) {
+      rlog(e.toString());
+    }
+  }
+}
+
+async function refreshTableInfo() {
+  if (!isValidEthAddr(walletAddr.value)) {
+    Message({
+      message: '警告：请先导入地址!',
+      type: 'warning',
+    });
+    return;
+  }
+
+  isRefreshingTableInfo.value = true;
+  const provider = ethProvider(currentNetwork.value);
+  await _updateEthAmount(provider);
+  await _updateTokenAmount(provider);
   isRefreshingTableInfo.value = false;
+
+  Message({
+    message: '刷新成功!',
+    type: 'success',
+  });
 }
 
 async function importToken() {
@@ -437,14 +458,11 @@ function showSendLayout(row) {
 async function _transaction(item) {
   const recvAddr = inputRecvAddr.value;
   const sendAmount = inputSendAmount.value;
-  const gasFee = inputGasFee.value;
 
   if (
     !isValidEthAddr(recvAddr) ||
     isNaN(Number(sendAmount)) ||
-    Number(sendAmount) <= 0 ||
-    isNaN(Number(gasFee)) ||
-    Number(gasFee) <= 0
+    Number(sendAmount) <= 0
   ) {
     Message({
       message: '警告：交易数据非法，请检查!',
@@ -453,24 +471,26 @@ async function _transaction(item) {
     return;
   }
 
-  await Msgbox({
-    title: '请确认交易信息',
-    message: h('div', null, [
-      h('div', null, [
-        h('span', null, '接收地址: '),
-        h(
-          'span',
-          { style: 'font-size: 0.7em; font-weight: bold' },
-          `${recvAddr}`
-        ),
-      ]),
-      h('p', null, `发送数量: ${sendAmount}`),
-      h('p', null, `交易油费: ${gasFee}Gwei`),
-    ]),
-    showCancelButton: true,
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-  })
+  // TODO
+  inputGasPrice.value = chainGasPrice.eth ? chainGasPrice.eth : '10';
+  await Msgbox.confirm(
+    `<div>
+        <el-input
+            v-model="inputGasPrice"
+            placeholder="油价"
+            style="width: 80px"
+        />
+        <span>接收地址: </span>
+        <span> ${recvAddr} </sapn>
+        <p>发送数量: ${sendAmount}</p>
+    </div>`,
+    '请确认交易信息',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      dangerouslyUseHTMLString: true,
+    }
+  )
     .then(async () => {
       const wallet = await _newWallet();
       if (!wallet) return;

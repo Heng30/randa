@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, defineExpose } from 'vue';
+import { ref } from 'vue';
 import { ethers } from 'ethers';
 import { Message } from 'element3';
 import { walletInfoTable } from '../../../../js/db.js';

@@ -63,3 +63,7 @@ export let ethProviderAPIKey = reactive({
   pocket: null,
   ankr: null,
 });
+
+export let chainGasPrice = reactive({
+    eth: null,
+})
