@@ -56,7 +56,8 @@
 import { ref, onMounted } from 'vue';
 import { Message } from 'element3';
 import { ethNetwork } from '../../../../js/store.js';
-import { ethNetworkTable } from '../../../../js/db.js';
+import { rlog } from '../../../../js/utils.js';
+import { ethNetworkTable, ethWalletInfoTable } from '../../../../js/db.js';
 
 const tableData = ethNetwork;
 const inputName = ref('');
@@ -102,7 +103,19 @@ async function addNetwork() {
   };
   tableData.push(item);
 
-  await ethNetworkTable.insert(item);
+  try {
+    await ethNetworkTable.insert(item);
+    await ethWalletInfoTable.insert({
+      tokenName: 'ETH',
+      tokenAddr: 'N/A',
+      amount: 'N/A',
+      network: item.network,
+      disabled: true,
+    });
+  } catch (e) {
+    rlog(e.toString());
+    return;
+  }
 
   inputName.value = '';
   inputNetwork.value = '';
@@ -117,7 +130,12 @@ async function deleteNetwork(item) {
   for (let i = 0; i < tableData.length; i++) {
     if (item.network === tableData[i].network) {
       tableData.splice(i, 1);
-      await ethNetworkTable.delete(item);
+      try {
+        await ethNetworkTable.delete(item);
+        await ethWalletInfoTable.delete_network(item.network);
+      } catch (e) {
+        rlog(e.toString());
+      }
     }
   }
 }

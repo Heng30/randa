@@ -8,7 +8,15 @@
       flex-direction: column;
     "
   >
-    <GenWallet ref="genWalletDialog" @finished="setWalletAddr" />
+    <GenWallet
+      ref="genWalletDialog"
+      @finished="
+        (addr) => {
+          walletAddr = addr;
+        }
+      "
+    />
+    <SendDialog ref="sendTokenDialog" />
     <div
       style="
         width: 100%;
@@ -18,7 +26,11 @@
         align-items: center;
       "
     >
-      <el-select v-model="currentNetwork" placeholder="请选择网络">
+      <el-select
+        v-model="currentNetwork"
+        placeholder="请选择网络"
+        @change="refreshTableData"
+      >
         <el-option
           v-for="item in ethNetwork"
           :key="item.name"
@@ -105,46 +117,17 @@
 
         <template v-slot="scope">
           <div>
-            <div v-if="scope.row.isSendToken">
-              <el-input
-                v-model="inputRecvAddr"
-                placeholder="请输入接收地址"
-                style="width: 400px; margin-right: 10px"
-              />
-              <el-input
-                v-model="inputSendAmount"
-                placeholder="代币数量"
-                style="width: 100px; margin-right: 10px"
-              />
+            <el-button type="primary" @click="showSendDialog(scope.row)">
+              发送
+            </el-button>
 
-              <el-button
-                type="primary"
-                @click="sendToken(scope.row)"
-                :loading="scope.row.isSending"
-              >
-                {{ scope.row.isSending ? '正在发送' : '确定' }}</el-button
-              >
-              <el-button
-                type="info"
-                @click="cancelSendToken(scope.row)"
-                :disabled="scope.row.isSending"
-                >取消</el-button
-              >
-            </div>
-
-            <div v-if="!scope.row.isSendToken">
-              <el-button type="primary" @click="showSendLayout(scope.row)">
-                发送
-              </el-button>
-
-              <el-button
-                type="danger"
-                @click="deleteToken(scope.row)"
-                :disabled="!scope.row.canDelete"
-              >
-                删除
-              </el-button>
-            </div>
+            <el-button
+              type="danger"
+              @click="deleteToken(scope.row)"
+              :disabled="!!scope.row.disabled"
+            >
+              删除
+            </el-button>
           </div>
         </template>
       </el-table-column>
@@ -154,13 +137,14 @@
 
 <script setup>
 import { ethers } from 'ethers';
-import { ref, onMounted, h } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Msgbox, Message } from 'element3';
 import { isValidEthAddr, ethProvider, rlog } from '../../../../js/utils.js';
-import { ethNetwork, chainGasPrice } from '../../../../js/store.js';
+import { ethNetwork } from '../../../../js/store.js';
 import { walletInfoTable, ethWalletInfoTable } from '../../../../js/db.js';
 import { writeText } from '@tauri-apps/api/clipboard';
 import GenWallet from './GenWallet.vue';
+import SendDialog from './SendDialog.vue';
 import CryptoJS from 'crypto-js';
 import { aseDecrypt } from '../../../../js/utils.js';
 
@@ -173,42 +157,27 @@ const inputImportTokenName = ref('');
 const inputImportTokenAddr = ref('');
 const isRefreshingTableInfo = ref(false);
 const genWalletDialog = ref(null);
-
-let isBusySending = false;
-const inputRecvAddr = ref('');
-const inputSendAmount = ref('');
-const inputGasPrice = ref('10');
-const inputGasLimit = ref('2100');
-
+const sendTokenDialog = ref(null);
 const tableData = ref([]);
+const tableDataAll = ref([]);
 
-async function _initDB() {
-  try {
-    await ethWalletInfoTable.insert({
-      tokenName: 'ETH',
-      tokenAddr: 'N/A',
-      amount: 'N/A',
-    });
-  } catch (_) {}
-}
 
 onMounted(async () => {
-  await _initDB();
-
   let tdata = await ethWalletInfoTable.load();
   if (Array.isArray(tdata)) {
-    tdata.forEach((item, index) => {
-      tableData.value.push({
+    tdata.forEach((item) => {
+      tableDataAll.value.push({
         tokenName: item.name,
         tokenAddr: item.tokenAddr,
         amount: item.amount,
+        disabled: item.disabled,
+        network: item.network,
         status: 'N/A',
-        isSendToken: false,
         isSending: false,
-        canDelete: index !== 0,
       });
     });
   }
+  refreshTableData();
 
   let item = await walletInfoTable.load(networkName);
   if (item.length === 1) {
@@ -216,8 +185,13 @@ onMounted(async () => {
   }
 });
 
-function setWalletAddr(addr) {
-  walletAddr.value = addr;
+function refreshTableData() {
+  tableData.value = [];
+  tableDataAll.value.forEach((item) => {
+    if (item.network === currentNetwork.value) {
+      tableData.value.push(item);
+    }
+  });
 }
 
 async function _newWallet() {
@@ -320,30 +294,23 @@ async function resetWallet() {
   return;
 }
 
-async function _updateEthAmount(provider) {
-  try {
-    const balance = await provider.getBalance(walletAddr.value);
-    tableData.value[0].amount = Number(
-      ethers.utils.formatEther(balance)
-    ).toFixed(4);
-    ethWalletInfoTable.update(tableData.value[0]);
-  } catch (e) {
-    rlog(e.toString());
-  }
-}
-
 async function _updateTokenAmount(provider) {
-  const abi = ['function balanceOf(address owner) view returns (uint256)'];
-
-  for (let i = 1; i < tableData.value.length; i++) {
-    const address = tableData.value[i].tokenAddr;
+  for (let i = 0; i < tableData.value.length; i++) {
+    let item = tableData.value[i];
     try {
-      const erc20 = new ethers.Contract(address, abi, provider);
-      const balance = await erc20.balanceOf(walletAddr.value);
-      tableData.value[i].amount = Number(
-        ethers.utils.formatEther(balance)
-      ).toFixed(4);
-      ethWalletInfoTable.update(tableData.value[i]);
+      const address = item.tokenAddr;
+      if (address === 'N/A') {
+        const balance = await provider.getBalance(walletAddr.value);
+        item.amount = Number(ethers.utils.formatEther(balance)).toFixed(4);
+      } else {
+        const abi = [
+          'function balanceOf(address owner) view returns (uint256)',
+        ];
+        const erc20 = new ethers.Contract(address, abi, provider);
+        const balance = await erc20.balanceOf(walletAddr.value);
+        item.amount = Number(ethers.utils.formatEther(balance)).toFixed(4);
+      }
+      ethWalletInfoTable.update(item);
     } catch (e) {
       rlog(e.toString());
     }
@@ -361,7 +328,6 @@ async function refreshTableInfo() {
 
   isRefreshingTableInfo.value = true;
   const provider = ethProvider(currentNetwork.value);
-  await _updateEthAmount(provider);
   await _updateTokenAmount(provider);
   isRefreshingTableInfo.value = false;
 
@@ -382,10 +348,11 @@ async function importToken() {
     return;
   }
 
-  for (let i = 0; i < tableData.value.length; i++) {
+  for (let i = 0; i < tableDataAll.value.length; i++) {
     if (
-      tableData.value[i].tokenName === tokenName ||
-      tableData.value[i].tokenAddr === tokenAddr
+      tableDataAll.value[i].network === currentNetwork.value &&
+      (tableDataAll.value[i].tokenName === tokenName ||
+        tableDataAll.value[i].tokenAddr === tokenAddr)
     ) {
       Message({
         message: '警告：代币名称或地址重复，无法添加!',
@@ -398,14 +365,15 @@ async function importToken() {
   let item = {
     tokenName: tokenName,
     tokenAddr: tokenAddr,
+    network: currentNetwork.value,
     amount: 'N/A',
     status: 'N/A',
-    isSendToken: false,
+    disabled: false,
     isSending: false,
-    canDelete: true,
   };
-  tableData.value.push(item);
+  tableDataAll.value.push(item);
   await ethWalletInfoTable.insert(item);
+  refreshTableData();
 
   inputImportTokenAddr.value = '';
   inputImportTokenName.value = '';
@@ -417,16 +385,18 @@ async function importToken() {
 }
 
 async function deleteToken(row) {
-  for (let i = 0; i < tableData.value.length; i++) {
-    if (tableData.value[i].tokenName === row.tokenName) {
+  for (let i = 0; i < tableDataAll.value.length; i++) {
+    const item = tableDataAll.value[i];
+    if (item.network === row.network && item.tokenName === row.tokenName) {
       Msgbox.confirm('是否删除该代币?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
       })
         .then(async () => {
-          await ethWalletInfoTable.delete(tableData.value[i]);
-          tableData.value.splice(i, 1);
+          await ethWalletInfoTable.delete(item);
+          tableDataAll.value.splice(i, 1);
+          refreshTableData();
           Message({
             message: '删除成功!',
             type: 'success',
@@ -445,95 +415,28 @@ async function copyWalletAddr() {
   });
 }
 
-function showSendLayout(row) {
-  let data = tableData.value;
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].tokenName === row.tokenName) {
-      data[i].isSendToken = true;
-      return;
-    }
-  }
+async function _doTransaction(item) {
+  const wallet = await _newWallet();
+  if (!wallet) return false;
+  console.log(item);
+  // TODO: send token
+  return true;
 }
 
-async function _transaction(item) {
-  const recvAddr = inputRecvAddr.value;
-  const sendAmount = inputSendAmount.value;
-
-  if (
-    !isValidEthAddr(recvAddr) ||
-    isNaN(Number(sendAmount)) ||
-    Number(sendAmount) <= 0
-  ) {
-    Message({
-      message: '警告：交易数据非法，请检查!',
-      type: 'warning',
-    });
-    return;
-  }
-
-  // TODO
-  inputGasPrice.value = chainGasPrice.eth ? chainGasPrice.eth : '10';
-  await Msgbox.confirm(
-    `<div>
-        <el-input
-            v-model="inputGasPrice"
-            placeholder="油价"
-            style="width: 80px"
-        />
-        <span>接收地址: </span>
-        <span> ${recvAddr} </sapn>
-        <p>发送数量: ${sendAmount}</p>
-    </div>`,
-    '请确认交易信息',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      dangerouslyUseHTMLString: true,
-    }
-  )
-    .then(async () => {
-      const wallet = await _newWallet();
-      if (!wallet) return;
-      // TODO: send token
-    })
-    .catch(() => {});
-}
-
-async function sendToken(row) {
-  if (isBusySending) {
-    Message({
-      message: '警告：正在进行交易，请稍后再试!',
-      type: 'warning',
-    });
-    return;
-  }
-
-  let data = tableData.value;
+function showSendDialog(row) {
   let item = null;
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].tokenName === row.tokenName) {
-      item = data[i];
-      item.isSendToken = false;
-      break;
+  for (let i = 0; i < tableData.value.length; i++) {
+    if (row.tokenName === tableData.value[i].tokenName) {
+      item = tableData.value[i];
     }
   }
 
-  if (!item) return;
-
-  isBusySending = true;
-  item.isSending = true;
-  _transaction(item);
-  item.isSending = false;
-  isBusySending = false;
-}
-
-function cancelSendToken(row) {
-  let data = tableData.value;
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].tokenName === row.tokenName) {
-      data[i].isSendToken = false;
-      return;
-    }
-  }
+  sendTokenDialog.value.setProps(item, async () => {
+    item.isSending = true;
+    const ret = await _doTransaction(item);
+    item.isSending = false;
+    return ret;
+  });
+  sendTokenDialog.value.show();
 }
 </script>

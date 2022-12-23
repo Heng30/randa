@@ -1,5 +1,5 @@
 import SQLite from 'tauri-plugin-sqlite-api';
-import { APP_DATA_DIR, ethProviderAPIKey } from './store.js';
+import { APP_DATA_DIR, ethProviderAPIKey, ethNetwork } from './store.js';
 import Web3 from 'web3';
 
 let DB = null;
@@ -21,9 +21,10 @@ export const initDB = async function () {
   await DB.execute(`CREATE TABLE IF NOT EXISTS wallet_info (name TEXT UNIQUE NOT NULL, password TEXT NOT NULL, mnemonic TEXT NOT NULL, privateKey TEXT NOT NULL, publicKey TEXT NOT NULL, address TEXT NOT NULL);
 `);
 
-  await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT UNIQUE NOT NULL, tokenAddr TEXT UNIQUE NOT NULL, amount TEXT NOT NULL);
+  await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT NOT NULL, tokenAddr TEXT NOT NULL, amount TEXT NOT NULL, network TEXT NOT NULL, disabled INT NOT NULL);
 `);
 
+  initEthWalletInfoTable();
   await initEthProviderAPIKey();
 };
 
@@ -123,21 +124,26 @@ export const ethWalletInfoTable = {
   },
 
   insert: async function (item) {
-    await DB.execute(`INSERT INTO eth_wallet_info VALUES ($1, $2, $3)`, [
-      item.tokenName,
-      item.tokenAddr,
-      item.amount,
-    ]);
+    await DB.execute(
+      `INSERT INTO eth_wallet_info VALUES ($1, $2, $3, $4, $5)`,
+      [item.tokenName, item.tokenAddr, item.amount, item.network, item.disabled]
+    );
   },
   delete: async function (item) {
-    await DB.execute(`DELETE FROM eth_wallet_info WHERE name=($1)`, [
-      item.tokenName,
-    ]);
+    await DB.execute(
+      `DELETE FROM eth_wallet_info WHERE name=($1) AND network=($2)`,
+      [item.tokenName, item.network]
+    );
   },
   update: async function (item) {
-    await DB.execute(`UPDATE eth_wallet_info SET amount=($1) WHERE name=($2)`, [
-      item.amount,
-      item.tokenName,
+    await DB.execute(
+      `UPDATE eth_wallet_info SET amount=($1) WHERE name=($2) AND network=($3)`,
+      [item.amount, item.tokenName, item.network]
+    );
+  },
+  delete_network: async function (network) {
+    await DB.execute(`DELETE FROM eth_wallet_info WHERE network=($1)`, [
+      network,
     ]);
   },
 };
@@ -147,6 +153,28 @@ const initEthProviderAPIKey = async function () {
   rows.forEach((item) => {
     if (ethProviderAPIKey.hasOwnProperty(item.name)) {
       ethProviderAPIKey[item.name] = item.apikey;
+    }
+  });
+};
+
+const initEthWalletInfoTable = async function () {
+  const row = await ethWalletInfoTable.load();
+  ethNetwork.forEach(async (item) => {
+    for (let i = 0; i < row.length; i++) {
+      if (row[i].network === item.network && row[i].tokenAddr === 'N/A')
+        return;
+    }
+
+    try {
+      await ethWalletInfoTable.insert({
+        tokenName: 'ETH',
+        tokenAddr: 'N/A',
+        amount: 'N/A',
+        network: item.network,
+        disabled: true,
+      });
+    } catch (e) {
+      console.log(e);
     }
   });
 };
