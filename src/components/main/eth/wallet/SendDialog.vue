@@ -7,18 +7,18 @@
   >
     <template v-slot:default>
       <div style="font-size: 1.2em; color: #303133">
-        <div style="margin-bottom: 20px">
-          <p style="width: 50%; margin-bottom: 20px">
-            代币名称: {{ tokenName }}
-          </p>
-          <div>
-            <span>接收地址: </span>
-            <el-input
-              v-model="inputRecvAddr"
-              placeholder="请输入接收地址"
-              style="width: 450px"
-            />
-          </div>
+        <div style="display: flex">
+          <span style="width: 50%"> 代币名称: {{ tokenName }} </span>
+          <span style="width: 50%"> 预估油费: {{ estimatGasFee }} USDT </span>
+        </div>
+
+        <div style="margin: 20px 0">
+          <span>接收地址: </span>
+          <el-input
+            v-model="inputRecvAddr"
+            placeholder="请输入接收地址"
+            style="width: 522px"
+          />
         </div>
 
         <div style="display: flex">
@@ -26,7 +26,7 @@
             代币数量:
             <el-input
               v-model="inputSendAmount"
-              placeholder="数量"
+              placeholder="ETH"
               style="width: 150px"
             />
           </div>
@@ -37,6 +37,7 @@
               v-model="inputGasPrice"
               placeholder="Gwei"
               style="width: 80px"
+              @change="calEstimatGasFee"
             />
           </div>
 
@@ -45,7 +46,8 @@
             <el-input
               v-model="inputGasLimit"
               placeholder="油量"
-              style="width: 80px"
+              style="width: 100px"
+              @change="calEstimatGasFee"
             />
           </div>
         </div>
@@ -63,7 +65,9 @@
 <script setup>
 import { ref } from 'vue';
 import { Message } from 'element3';
-import { chainGasPrice } from '../../../../js/store.js';
+import { chainGasPrice, tokenPrice } from '../../../../js/store.js';
+
+import { isValidEthAddr } from '../../../../js/utils.js';
 
 const emit = defineEmits(['finished']);
 
@@ -74,13 +78,17 @@ const inputGasLimit = ref('21000');
 const inputRecvAddr = ref('');
 const inputSendAmount = ref('');
 const tokenName = ref('');
+const estimatGasFee = ref('N/A');
 let sendCB = null;
 let titem = null;
 
 defineExpose({
   show: () => {
     dialogVisible.value = true;
+    inputRecvAddr.value = '';
+    inputSendAmount.value = '';
     inputGasPrice.value = chainGasPrice.eth ? chainGasPrice.eth : '10';
+    calEstimatGasFee();
   },
 
   setProps: (item, cb) => {
@@ -90,21 +98,40 @@ defineExpose({
   },
 });
 
+async function calEstimatGasFee() {
+  const ethPrice = tokenPrice.eth !== 'N/A' ? tokenPrice.eth : 0;
+  const fee =
+    (Number(inputGasPrice.value) *
+      Number(inputGasLimit.value) *
+      Number(ethPrice)) /
+    1e9;
+  estimatGasFee.value = fee.toFixed(4);
+}
+
 function cancelSend() {
   dialogVisible.value = false;
 }
 
 async function sendToken() {
+  if (
+    !isValidEthAddr(inputRecvAddr.value) ||
+    isNaN(Number(inputSendAmount.value)) ||
+    Number(inputSendAmount.value) <= 0
+  ) {
+    Message({
+      message: '警告：接收地址或发送数量格式错误!',
+      type: 'warning',
+    });
+    return;
+  }
+
   dialogVisible.value = false;
   if (titem && sendCB) {
+    titem.recvAddr = inputRecvAddr.value;
+    titem.sendAmount = inputSendAmount.value;
     titem.gasPrice = inputGasPrice.value;
     titem.gasLimit = inputGasLimit.value;
-    if (await sendCB()) {
-      Message({
-        message: '发送成功!',
-        type: 'success',
-      });
-    }
+    await sendCB();
   } else {
     Message({
       message: '警告：发送失败，没有设置回调函数!',
@@ -114,57 +141,4 @@ async function sendToken() {
 }
 </script>
 
-<!-- <div v-if="scope.row.isSendToken"> -->
 
-<!--   <el-button -->
-<!--     type="primary" -->
-<!--     @click="sendToken(scope.row)" -->
-<!--     :loading="scope.row.isSending" -->
-<!--   > -->
-<!--     {{ scope.row.isSending ? '正在发送' : '确定' }}</el-button -->
-<!--   > -->
-<!--   <el-button -->
-<!--     type="info" -->
-<!--     @click="cancelSendToken(scope.row)" -->
-<!--     :disabled="scope.row.isSending" -->
-<!--     >取消</el-button -->
-<!--   > -->
-<!-- </div> -->
-
-<!-- async function sendToken(row) { -->
-<!--   let data = tableData.value; -->
-<!--   let item = null; -->
-<!--   for (let i = 0; i < data.length; i++) { -->
-<!--     if (data[i].tokenName === row.tokenName) { -->
-<!--       item = data[i]; -->
-<!--       break; -->
-<!--     } -->
-<!--   } -->
-
-<!--   if (!item) return; -->
-<!--   _showSendDialog(item); -->
-<!-- } -->
-
-<!-- function cancelSendToken(row) { -->
-<!--   let data = tableData.value; -->
-<!--   for (let i = 0; i < data.length; i++) { -->
-<!--     if (data[i].tokenName === row.tokenName) { -->
-<!--       return; -->
-<!--     } -->
-<!--   } -->
-<!-- } -->
-
-<!-- const recvAddr = inputRecvAddr.value; -->
-<!-- const sendAmount = inputSendAmount.value; -->
-
-<!-- if ( -->
-<!--   !isValidEthAddr(recvAddr) || -->
-<!--   isNaN(Number(sendAmount)) || -->
-<!--   Number(sendAmount) <= 0 -->
-<!-- ) { -->
-<!--   Message({ -->
-<!--     message: '警告：交易数据非法，请检查!', -->
-<!--     type: 'warning', -->
-<!--   }); -->
-<!--   return; -->
-<!-- } -->

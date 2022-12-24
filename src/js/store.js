@@ -67,3 +67,7 @@ export let ethProviderAPIKey = reactive({
 export let chainGasPrice = reactive({
     eth: null,
 })
+
+export let tokenPrice = reactive({
+    eth: null,
+})

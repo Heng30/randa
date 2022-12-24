@@ -117,7 +117,11 @@
 
         <template v-slot="scope">
           <div>
-            <el-button type="primary" @click="showSendDialog(scope.row)">
+            <el-button
+              type="primary"
+              @click="showSendDialog(scope.row)"
+              :loading="scope.row.isSending"
+            >
               发送
             </el-button>
 
@@ -139,7 +143,11 @@
 import { ethers } from 'ethers';
 import { ref, onMounted } from 'vue';
 import { Msgbox, Message } from 'element3';
-import { isValidEthAddr, ethProvider, rlog } from '../../../../js/utils.js';
+import {
+  isValidEthAddr,
+  ethProvider,
+  isEthPubNet,
+} from '../../../../js/utils.js';
 import { ethNetwork } from '../../../../js/store.js';
 import { walletInfoTable, ethWalletInfoTable } from '../../../../js/db.js';
 import { writeText } from '@tauri-apps/api/clipboard';
@@ -160,7 +168,6 @@ const genWalletDialog = ref(null);
 const sendTokenDialog = ref(null);
 const tableData = ref([]);
 const tableDataAll = ref([]);
-
 
 onMounted(async () => {
   let tdata = await ethWalletInfoTable.load();
@@ -295,6 +302,7 @@ async function resetWallet() {
 }
 
 async function _updateTokenAmount(provider) {
+  let isAllSuccess = true;
   for (let i = 0; i < tableData.value.length; i++) {
     let item = tableData.value[i];
     try {
@@ -312,8 +320,19 @@ async function _updateTokenAmount(provider) {
       }
       ethWalletInfoTable.update(item);
     } catch (e) {
-      rlog(e.toString());
+      Message({
+        message: `警告: 刷新失败! ${e}`,
+        type: 'warning',
+      });
+      isAllSuccess = false;
     }
+  }
+
+  if (isAllSuccess) {
+    Message({
+      message: '刷新成功!',
+      type: 'success',
+    });
   }
 }
 
@@ -330,11 +349,6 @@ async function refreshTableInfo() {
   const provider = ethProvider(currentNetwork.value);
   await _updateTokenAmount(provider);
   isRefreshingTableInfo.value = false;
-
-  Message({
-    message: '刷新成功!',
-    type: 'success',
-  });
 }
 
 async function importToken() {
@@ -418,9 +432,54 @@ async function copyWalletAddr() {
 async function _doTransaction(item) {
   const wallet = await _newWallet();
   if (!wallet) return false;
-  console.log(item);
-  // TODO: send token
-  return true;
+
+  let ret = true;
+  const confirmCount = isEthPubNet(item.network) ? 6 : 1;
+  const tx = {
+    to: item.recvAddr,
+    value: ethers.utils.parseEther(item.sendAmount),
+    gasPrice: ethers.BigNumber.from(Number(item.gasPrice) * 1e9),
+    gasLimit: ethers.BigNumber.from(Number(item.gasLimit)),
+  };
+
+  item.isSending = true;
+  try {
+    let receipt = null;
+    if (item.tokenName === 'ETH' || item.tokenAddr === 'N/A') {
+      const resp = await wallet.sendTransaction(tx);
+      item.status = '等待';
+      receipt = await resp.wait(confirmCount);
+      item.status = '成功';
+      Message({
+        message: '发送成功！',
+        type: 'success',
+      });
+    } else {
+      // TODO: send erc20 token
+    }
+
+    item.amount = Number(
+      ethers.utils.formatEther(
+        ethers.utils
+          .parseEther(String(item.amount))
+          .sub(ethers.utils.parseEther(String(item.sendAmount)))
+          .sub(receipt.gasUsed)
+      )
+    ).toFixed(4);
+    await ethWalletInfoTable.update(item);
+  } catch (e) {
+    item.status = '失败';
+    Message({
+      message: `警告: 发送失败！ ${e}`,
+      type: 'warning',
+    });
+    ret = false;
+  }
+
+  item.isSending = false;
+  item.recvAddr = '';
+  item.sendAmount = '0';
+  return ret;
 }
 
 function showSendDialog(row) {
@@ -432,10 +491,7 @@ function showSendDialog(row) {
   }
 
   sendTokenDialog.value.setProps(item, async () => {
-    item.isSending = true;
-    const ret = await _doTransaction(item);
-    item.isSending = false;
-    return ret;
+    return await _doTransaction(item);
   });
   sendTokenDialog.value.show();
 }

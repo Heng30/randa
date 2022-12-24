@@ -18,6 +18,7 @@
           :autosize="{ minRows: 4, maxRows: 8 }"
           placeholder="请输入内容"
           v-model="textarea"
+          style="font-size: 1.2em"
         >
         </el-input>
       </div>

@@ -11,13 +11,12 @@ use std::fs;
 use std::io::Write;
 use tauri;
 use tauri_plugin_sqlite;
-use tokio;
 
 mod def;
 mod utils;
+mod httpclient;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     init_logger();
     init_app_dir();
     debug!("start...");
@@ -28,7 +27,8 @@ async fn main() {
             utils::config_dir,
             utils::data_dir,
             utils::write_file,
-            utils::write_file_2_tmp
+            utils::write_file_2_tmp,
+            httpclient::http_client_get,
         ])
         .plugin(tauri_plugin_sqlite::init())
         .run(tauri::generate_context!())

@@ -12,6 +12,12 @@ export const rlog = async function (text) {
   });
 };
 
+export const http_client_get = async function (url) {
+  return await invoke('http_client_get', {
+    url: url,
+  });
+};
+
 export const json2obj = async function (json) {
   try {
     return JSON.parse(json);
@@ -106,24 +112,24 @@ export const timeFormat = function (timestamp) {
   return Y + '-' + M + '-' + D + ' ' + h + ':' + m + ':' + s;
 };
 
-export const aseEncrypt = function(password, plainText) {
-    const iv = CryptoJS.MD5(password).toString();
-    const encText = CryptoJS.AES.encrypt(plainText, password, {
-        iv: CryptoJS.enc.Hex.parse(iv),
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-    })
+export const aseEncrypt = function (password, plainText) {
+  const iv = CryptoJS.MD5(password).toString();
+  const encText = CryptoJS.AES.encrypt(plainText, password, {
+    iv: CryptoJS.enc.Hex.parse(iv),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
 
-    return encText.toString();
-}
+  return encText.toString();
+};
 
-export const aseDecrypt = function(password, encText) {
-    const iv = CryptoJS.MD5(password).toString();
-    const decText = CryptoJS.AES.decrypt(encText, password, {
-        iv: CryptoJS.enc.Hex.parse(iv),
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-    })
+export const aseDecrypt = function (password, encText) {
+  const iv = CryptoJS.MD5(password).toString();
+  const decText = CryptoJS.AES.decrypt(encText, password, {
+    iv: CryptoJS.enc.Hex.parse(iv),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
 
-    return decText.toString(CryptoJS.enc.Utf8);
-}
+  return decText.toString(CryptoJS.enc.Utf8);
+};
