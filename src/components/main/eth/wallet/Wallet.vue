@@ -179,7 +179,7 @@ onMounted(async () => {
         amount: item.amount,
         disabled: item.disabled,
         network: item.network,
-        status: 'N/A',
+        status: item.status,
         isSending: false,
       });
     });

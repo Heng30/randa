@@ -1,6 +1,7 @@
 import SQLite from 'tauri-plugin-sqlite-api';
 import { APP_DATA_DIR, ethProviderAPIKey, ethNetwork } from './store.js';
 import Web3 from 'web3';
+import { rlog } from './utils.js';
 
 let DB = null;
 
@@ -21,7 +22,7 @@ export const initDB = async function () {
   await DB.execute(`CREATE TABLE IF NOT EXISTS wallet_info (name TEXT UNIQUE NOT NULL, password TEXT NOT NULL, mnemonic TEXT NOT NULL, privateKey TEXT NOT NULL, publicKey TEXT NOT NULL, address TEXT NOT NULL);
 `);
 
-  await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT NOT NULL, tokenAddr TEXT NOT NULL, amount TEXT NOT NULL, network TEXT NOT NULL, disabled INT NOT NULL);
+  await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT NOT NULL, tokenAddr TEXT NOT NULL, amount TEXT NOT NULL, network TEXT NOT NULL, status TEXT NOT NULL, disabled INT NOT NULL);
 `);
 
   initEthWalletInfoTable();
@@ -125,8 +126,15 @@ export const ethWalletInfoTable = {
 
   insert: async function (item) {
     await DB.execute(
-      `INSERT INTO eth_wallet_info VALUES ($1, $2, $3, $4, $5)`,
-      [item.tokenName, item.tokenAddr, item.amount, item.network, item.disabled]
+      `INSERT INTO eth_wallet_info VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        item.tokenName,
+        item.tokenAddr,
+        item.amount,
+        item.network,
+        item.status,
+        item.disabled,
+      ]
     );
   },
   delete: async function (item) {
@@ -137,8 +145,8 @@ export const ethWalletInfoTable = {
   },
   update: async function (item) {
     await DB.execute(
-      `UPDATE eth_wallet_info SET amount=($1) WHERE name=($2) AND network=($3)`,
-      [item.amount, item.tokenName, item.network]
+      `UPDATE eth_wallet_info SET amount=($1), status=($2) WHERE name=($3) AND network=($4)`,
+      [item.amount, item.status, item.tokenName, item.network]
     );
   },
   delete_network: async function (network) {
@@ -161,8 +169,7 @@ const initEthWalletInfoTable = async function () {
   const row = await ethWalletInfoTable.load();
   ethNetwork.forEach(async (item) => {
     for (let i = 0; i < row.length; i++) {
-      if (row[i].network === item.network && row[i].tokenAddr === 'N/A')
-        return;
+      if (row[i].network === item.network && row[i].tokenAddr === 'N/A') return;
     }
 
     try {
@@ -171,10 +178,11 @@ const initEthWalletInfoTable = async function () {
         tokenAddr: 'N/A',
         amount: 'N/A',
         network: item.network,
+        status: 'N/A',
         disabled: true,
       });
     } catch (e) {
-      console.log(e);
+      rlog(e.toString());
     }
   });
 };

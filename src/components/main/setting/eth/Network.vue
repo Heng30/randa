@@ -110,6 +110,7 @@ async function addNetwork() {
       tokenAddr: 'N/A',
       amount: 'N/A',
       network: item.network,
+      status: 'N/A',
       disabled: true,
     });
   } catch (e) {
