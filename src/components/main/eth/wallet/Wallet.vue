@@ -313,10 +313,12 @@ async function _updateTokenAmount(provider) {
       } else {
         const abi = [
           'function balanceOf(address owner) view returns (uint256)',
+          'function decimals() public view returns (uint8)',
         ];
         const erc20 = new ethers.Contract(address, abi, provider);
         const balance = await erc20.balanceOf(walletAddr.value);
-        item.amount = Number(ethers.utils.formatEther(balance)).toFixed(4);
+        const decimals = await erc20.decimals();
+        item.amount = Number(ethers.utils.formatUnits(balance, decimals)).toFixed(4);
       }
       ethWalletInfoTable.update(item);
     } catch (e) {
@@ -468,12 +470,29 @@ async function _doTransaction(item) {
       item.status = '等待';
       receipt = await resp.wait(confirmCount);
       item.status = '成功';
+
+      let gasFee = receipt.gasUsed.mul(
+        ethers.utils.parseUnits(item.gasPrice, 'gwei')
+      );
+      item.amount = Number(
+        ethers.utils.formatEther(
+          ethers.utils
+            .parseEther(String(item.amount))
+            .sub(ethers.utils.parseEther(String(item.sendAmount)))
+            .sub(gasFee)
+        )
+      ).toFixed(4);
+      await ethWalletInfoTable.update(item);
     } else {
-      const abi = ['function transfer(address to, uint amount) returns (bool)'];
+      const abi = [
+        'function transfer(address to, uint amount) returns (bool)',
+        'function decimals() public view returns (uint8)',
+      ];
       const erc20 = new ethers.Contract(item.tokenAddr, abi, wallet);
+      const decimals = await erc20.decimals();
       const tx = await erc20.transfer(
         item.recvAddr,
-        ethers.utils.parseUnits(String(item.sendAmount)),
+        ethers.utils.parseUnits(String(item.sendAmount), decimals),
         {
           gasPrice: ethers.utils.parseUnits(item.gasPrice, 'gwei'),
           gasLimit: ethers.BigNumber.from(Number(item.gasLimit)),
@@ -482,19 +501,21 @@ async function _doTransaction(item) {
       item.status = '等待';
       receipt = await tx.wait(confirmCount);
       item.status = '成功';
-    }
 
-    Message({
-      message: '发送成功！',
-      type: 'success',
-    });
+      item.amount = Number(
+        ethers.utils.formatEther(
+          ethers.utils
+            .parseUnits(String(item.amount), decimals)
+            .sub(ethers.utils.parseUnits(String(item.sendAmount, decimals)))
+        )
+      ).toFixed(4);
+      await ethWalletInfoTable.update(item);
 
-    let gasFee = receipt.gasUsed.mul(
-      ethers.utils.parseUnits(item.gasPrice, 'gwei')
-    );
-    if (item.tokenName !== 'ETH') {
       let eitem = _getCurEthItem();
       if (eitem) {
+        let gasFee = receipt.gasUsed.mul(
+          ethers.utils.parseUnits(item.gasPrice, 'gwei')
+        );
         eitem.amount = Number(
           ethers.utils.formatEther(
             ethers.utils.parseEther(String(eitem.amount)).sub(gasFee)
@@ -502,18 +523,12 @@ async function _doTransaction(item) {
         ).toFixed(4);
         await ethWalletInfoTable.update(eitem);
       }
-      gasFee = ethers.BigNumber.from('0');
     }
 
-    item.amount = Number(
-      ethers.utils.formatEther(
-        ethers.utils
-          .parseEther(String(item.amount))
-          .sub(ethers.utils.parseEther(String(item.sendAmount)))
-          .sub(gasFee)
-      )
-    ).toFixed(4);
-    await ethWalletInfoTable.update(item);
+    Message({
+      message: '发送成功！',
+      type: 'success',
+    });
   } catch (e) {
     item.status = '失败';
     Message({
