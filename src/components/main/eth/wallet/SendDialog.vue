@@ -8,7 +8,9 @@
     <template v-slot:default>
       <div style="font-size: 1.2em; color: #303133">
         <div style="display: flex">
-          <span style="width: 50%"> 代币名称: {{ tokenName }} </span>
+          <span style="width: 50%">
+            代币信息: {{ tokenName }} ({{ networkName }})</span
+          >
           <span style="width: 50%"> 预估油费: {{ estimatGasFee }} USDT </span>
         </div>
 
@@ -18,7 +20,16 @@
             v-model="inputRecvAddr"
             placeholder="请输入接收地址"
             style="width: 522px"
-          />
+          >
+            <template v-slot:suffix>
+              <el-tooltip content="地址簿" placement="top">
+                <i
+                  class="el-input__icon el-icon-notebook-2"
+                  @click="showAddrBook"
+                ></i>
+              </el-tooltip>
+            </template>
+          </el-input>
         </div>
 
         <div style="display: flex">
@@ -26,7 +37,7 @@
             代币数量:
             <el-input
               v-model="inputSendAmount"
-              placeholder="ETH"
+              :placeholder="tokenName"
               style="width: 150px"
             />
           </div>
@@ -65,11 +76,9 @@
 <script setup>
 import { ref } from 'vue';
 import { Message } from 'element3';
-import { chainGasPrice, tokenPrice } from '../../../../js/store.js';
+import { chainGasPrice, tokenPrice, ethNetwork } from '../../../../js/store.js';
 
 import { isValidEthAddr } from '../../../../js/utils.js';
-
-const emit = defineEmits(['finished']);
 
 const dialogVisible = ref(false);
 const inputGasPrice = ref('');
@@ -78,6 +87,7 @@ const inputGasLimit = ref('21000');
 const inputRecvAddr = ref('');
 const inputSendAmount = ref('');
 const tokenName = ref('');
+const networkName = ref('');
 const estimatGasFee = ref('N/A');
 let sendCB = null;
 let titem = null;
@@ -88,6 +98,7 @@ defineExpose({
     inputRecvAddr.value = '';
     inputSendAmount.value = '';
     inputGasPrice.value = chainGasPrice.eth ? chainGasPrice.eth : '10';
+    inputGasLimit.value = tokenName.value === 'ETH' ? '21000' : '250000';
     calEstimatGasFee();
   },
 
@@ -95,6 +106,11 @@ defineExpose({
     titem = item;
     sendCB = cb;
     tokenName.value = item.tokenName;
+    networkName.value = (() => {
+      for (let i = 0; i < ethNetwork.length; i++) {
+        if (ethNetwork[i].network === item.network) return ethNetwork[i].name;
+      }
+    })();
   },
 });
 
@@ -132,6 +148,8 @@ async function sendToken() {
     titem.gasPrice = inputGasPrice.value;
     titem.gasLimit = inputGasLimit.value;
     await sendCB();
+    titem.recvAddr = '';
+    titem.sendAmount = '0';
   } else {
     Message({
       message: '警告：发送失败，没有设置回调函数!',
@@ -139,6 +157,8 @@ async function sendToken() {
     });
   }
 }
+
+function showAddrBook() {
+  console.log('TODO: show address book');
+}
 </script>
-
-

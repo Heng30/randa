@@ -429,33 +429,80 @@ async function copyWalletAddr() {
   });
 }
 
+function _getCurEthItem() {
+  for (let i = 0; i < tableData.value.length; i++) {
+    if (tableData.value[i].tokenName === 'ETH') {
+      return tableData.value[i];
+    }
+  }
+
+  return null;
+}
+
 async function _doTransaction(item) {
+  if (Number(item.amount) < Number(item.sendAmount)) {
+    Message({
+      message: '警告: 发送失败, 余额不足!',
+      type: 'warning',
+    });
+    return false;
+  }
+
   const wallet = await _newWallet();
   if (!wallet) return false;
 
   let ret = true;
   const confirmCount = isEthPubNet(item.network) ? 6 : 1;
-  const tx = {
-    to: item.recvAddr,
-    value: ethers.utils.parseEther(item.sendAmount),
-    gasPrice: ethers.BigNumber.from(Number(item.gasPrice) * 1e9),
-    gasLimit: ethers.BigNumber.from(Number(item.gasLimit)),
-  };
-
   item.isSending = true;
   try {
     let receipt = null;
     if (item.tokenName === 'ETH' || item.tokenAddr === 'N/A') {
+      const tx = {
+        to: item.recvAddr,
+        value: ethers.utils.parseEther(item.sendAmount),
+        gasPrice: ethers.utils.parseUnits(item.gasPrice, 'gwei'),
+        gasLimit: ethers.BigNumber.from(Number(item.gasLimit)),
+      };
+
       const resp = await wallet.sendTransaction(tx);
       item.status = '等待';
       receipt = await resp.wait(confirmCount);
       item.status = '成功';
-      Message({
-        message: '发送成功！',
-        type: 'success',
-      });
     } else {
-      // TODO: send erc20 token
+      const abi = ['function transfer(address to, uint amount) returns (bool)'];
+      const erc20 = new ethers.Contract(item.tokenAddr, abi, wallet);
+      const tx = await erc20.transfer(
+        item.recvAddr,
+        ethers.utils.parseUnits(String(item.sendAmount)),
+        {
+          gasPrice: ethers.utils.parseUnits(item.gasPrice, 'gwei'),
+          gasLimit: ethers.BigNumber.from(Number(item.gasLimit)),
+        }
+      );
+      item.status = '等待';
+      receipt = await tx.wait(confirmCount);
+      item.status = '成功';
+    }
+
+    Message({
+      message: '发送成功！',
+      type: 'success',
+    });
+
+    let gasFee = receipt.gasUsed.mul(
+      ethers.utils.parseUnits(item.gasPrice, 'gwei')
+    );
+    if (item.tokenName !== 'ETH') {
+      let eitem = _getCurEthItem();
+      if (eitem) {
+        eitem.amount = Number(
+          ethers.utils.formatEther(
+            ethers.utils.parseEther(String(eitem.amount)).sub(gasFee)
+          )
+        ).toFixed(4);
+        await ethWalletInfoTable.update(eitem);
+      }
+      gasFee = ethers.BigNumber.from('0');
     }
 
     item.amount = Number(
@@ -463,7 +510,7 @@ async function _doTransaction(item) {
         ethers.utils
           .parseEther(String(item.amount))
           .sub(ethers.utils.parseEther(String(item.sendAmount)))
-          .sub(receipt.gasUsed)
+          .sub(gasFee)
       )
     ).toFixed(4);
     await ethWalletInfoTable.update(item);
@@ -477,8 +524,6 @@ async function _doTransaction(item) {
   }
 
   item.isSending = false;
-  item.recvAddr = '';
-  item.sendAmount = '0';
   return ret;
 }
 
