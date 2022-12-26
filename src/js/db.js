@@ -1,5 +1,10 @@
 import SQLite from 'tauri-plugin-sqlite-api';
-import { APP_DATA_DIR, ethProviderAPIKey, ethNetwork } from './store.js';
+import {
+  APP_DATA_DIR,
+  ethProviderAPIKey,
+  ethNetwork,
+  ethWalletInfoTableData,
+} from './store.js';
 import Web3 from 'web3';
 import { rlog } from './utils.js';
 
@@ -25,8 +30,9 @@ export const initDB = async function () {
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT NOT NULL, tokenAddr TEXT NOT NULL, amount TEXT NOT NULL, network TEXT NOT NULL, status TEXT NOT NULL, disabled INT NOT NULL);
 `);
 
-  initEthWalletInfoTable();
-  await initEthProviderAPIKey();
+  await ethProviderAPIKeyTable.init();
+  await ethNetworkTable.init();
+  await ethWalletInfoTable.init();
 };
 
 export const uninitDB = async function () {
@@ -57,6 +63,16 @@ export const ethAddrBalanceTable = {
 };
 
 export const ethNetworkTable = {
+  init: async function () {
+    const rows = await this.load();
+    rows.forEach((item) => {
+      ethNetwork.push({
+        name: item.name,
+        network: item.network,
+        disabled: !!item.disabled,
+      });
+    });
+  },
   load: async function () {
     let rows = await DB.select('SELECT * FROM eth_network');
     return rows;
@@ -76,6 +92,14 @@ export const ethNetworkTable = {
 };
 
 export const ethProviderAPIKeyTable = {
+  init: async function () {
+    const rows = await this.load();
+    rows.forEach((item) => {
+      if (ethProviderAPIKey.hasOwnProperty(item.name)) {
+        ethProviderAPIKey[item.name] = item.apikey;
+      }
+    });
+  },
   load: async function () {
     let rows = await DB.select('SELECT * FROM eth_provider_apikey');
     return rows;
@@ -119,6 +143,41 @@ export const walletInfoTable = {
 };
 
 export const ethWalletInfoTable = {
+  init: async function () {
+    const rows = await this.load();
+    ethNetwork.forEach(async (item) => {
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].network === item.network && rows[i].tokenAddr === 'N/A')
+          return;
+      }
+
+      try {
+        await this.insert({
+          tokenName: 'ETH',
+          tokenAddr: 'N/A',
+          amount: 'N/A',
+          network: item.network,
+          status: 'N/A',
+          disabled: true,
+        });
+      } catch (e) {
+        rlog(e.toString());
+      }
+    });
+
+    let nrows = await this.load();
+    nrows.forEach((item) => {
+      ethWalletInfoTableData.push({
+        tokenName: item.name,
+        tokenAddr: item.tokenAddr,
+        amount: item.amount,
+        disabled: item.disabled,
+        network: item.network,
+        status: item.status,
+        isSending: false,
+      });
+    });
+  },
   load: async function () {
     let rows = await DB.select('SELECT * FROM eth_wallet_info');
     return rows;
@@ -154,35 +213,4 @@ export const ethWalletInfoTable = {
       network,
     ]);
   },
-};
-
-const initEthProviderAPIKey = async function () {
-  const rows = await ethProviderAPIKeyTable.load();
-  rows.forEach((item) => {
-    if (ethProviderAPIKey.hasOwnProperty(item.name)) {
-      ethProviderAPIKey[item.name] = item.apikey;
-    }
-  });
-};
-
-const initEthWalletInfoTable = async function () {
-  const row = await ethWalletInfoTable.load();
-  ethNetwork.forEach(async (item) => {
-    for (let i = 0; i < row.length; i++) {
-      if (row[i].network === item.network && row[i].tokenAddr === 'N/A') return;
-    }
-
-    try {
-      await ethWalletInfoTable.insert({
-        tokenName: 'ETH',
-        tokenAddr: 'N/A',
-        amount: 'N/A',
-        network: item.network,
-        status: 'N/A',
-        disabled: true,
-      });
-    } catch (e) {
-      rlog(e.toString());
-    }
-  });
 };

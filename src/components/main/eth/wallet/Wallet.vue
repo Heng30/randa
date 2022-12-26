@@ -148,7 +148,7 @@ import {
   ethProvider,
   isEthPubNet,
 } from '../../../../js/utils.js';
-import { ethNetwork } from '../../../../js/store.js';
+import { ethNetwork, ethWalletInfoTableData } from '../../../../js/store.js';
 import { walletInfoTable, ethWalletInfoTable } from '../../../../js/db.js';
 import { writeText } from '@tauri-apps/api/clipboard';
 import GenWallet from './GenWallet.vue';
@@ -167,34 +167,19 @@ const isRefreshingTableInfo = ref(false);
 const genWalletDialog = ref(null);
 const sendTokenDialog = ref(null);
 const tableData = ref([]);
-const tableDataAll = ref([]);
+const tableDataAll = ethWalletInfoTableData;
 
 onMounted(async () => {
-  let tdata = await ethWalletInfoTable.load();
-  if (Array.isArray(tdata)) {
-    tdata.forEach((item) => {
-      tableDataAll.value.push({
-        tokenName: item.name,
-        tokenAddr: item.tokenAddr,
-        amount: item.amount,
-        disabled: item.disabled,
-        network: item.network,
-        status: item.status,
-        isSending: false,
-      });
-    });
-  }
-  refreshTableData();
-
   let item = await walletInfoTable.load(networkName);
   if (item.length === 1) {
     walletAddr.value = item[0].address;
   }
+  refreshTableData();
 });
 
 function refreshTableData() {
   tableData.value = [];
-  tableDataAll.value.forEach((item) => {
+  tableDataAll.forEach((item) => {
     if (item.network === currentNetwork.value) {
       tableData.value.push(item);
     }
@@ -318,7 +303,9 @@ async function _updateTokenAmount(provider) {
         const erc20 = new ethers.Contract(address, abi, provider);
         const balance = await erc20.balanceOf(walletAddr.value);
         const decimals = await erc20.decimals();
-        item.amount = Number(ethers.utils.formatUnits(balance, decimals)).toFixed(4);
+        item.amount = Number(
+          ethers.utils.formatUnits(balance, decimals)
+        ).toFixed(4);
       }
       ethWalletInfoTable.update(item);
     } catch (e) {
@@ -364,11 +351,11 @@ async function importToken() {
     return;
   }
 
-  for (let i = 0; i < tableDataAll.value.length; i++) {
+  for (let i = 0; i < tableDataAll.length; i++) {
     if (
-      tableDataAll.value[i].network === currentNetwork.value &&
-      (tableDataAll.value[i].tokenName === tokenName ||
-        tableDataAll.value[i].tokenAddr === tokenAddr)
+      tableDataAll[i].network === currentNetwork.value &&
+      (tableDataAll[i].tokenName === tokenName ||
+        tableDataAll[i].tokenAddr === tokenAddr)
     ) {
       Message({
         message: '警告：代币名称或地址重复，无法添加!',
@@ -387,7 +374,7 @@ async function importToken() {
     disabled: false,
     isSending: false,
   };
-  tableDataAll.value.push(item);
+  tableDataAll.push(item);
   await ethWalletInfoTable.insert(item);
   refreshTableData();
 
@@ -401,8 +388,8 @@ async function importToken() {
 }
 
 async function deleteToken(row) {
-  for (let i = 0; i < tableDataAll.value.length; i++) {
-    const item = tableDataAll.value[i];
+  for (let i = 0; i < tableDataAll.length; i++) {
+    const item = tableDataAll[i];
     if (item.network === row.network && item.tokenName === row.tokenName) {
       Msgbox.confirm('是否删除该代币?', '提示', {
         confirmButtonText: '确定',
@@ -411,7 +398,7 @@ async function deleteToken(row) {
       })
         .then(async () => {
           await ethWalletInfoTable.delete(item);
-          tableDataAll.value.splice(i, 1);
+          tableDataAll.splice(i, 1);
           refreshTableData();
           Message({
             message: '删除成功!',

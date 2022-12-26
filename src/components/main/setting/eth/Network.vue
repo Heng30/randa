@@ -53,26 +53,15 @@
 </style>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { Message } from 'element3';
-import { ethNetwork } from '../../../../js/store.js';
+import { ethNetwork, ethWalletInfoTableData } from '../../../../js/store.js';
 import { rlog } from '../../../../js/utils.js';
 import { ethNetworkTable, ethWalletInfoTable } from '../../../../js/db.js';
 
 const tableData = ethNetwork;
 const inputName = ref('');
 const inputNetwork = ref('');
-
-onMounted(async () => {
-  const rows = await ethNetworkTable.load();
-  rows.forEach((item) => {
-    tableData.push({
-      name: item.name,
-      network: item.network,
-      disabled: !!item.disabled,
-    });
-  });
-});
 
 async function addNetwork() {
   if (inputName.value.length <= 0 || inputNetwork.value.length <= 0) {
@@ -105,14 +94,18 @@ async function addNetwork() {
 
   try {
     await ethNetworkTable.insert(item);
-    await ethWalletInfoTable.insert({
+
+    const witem = {
       tokenName: 'ETH',
       tokenAddr: 'N/A',
       amount: 'N/A',
       network: item.network,
       status: 'N/A',
       disabled: true,
-    });
+      isSending: false,
+    };
+    ethWalletInfoTableData.push(witem);
+    await ethWalletInfoTable.insert(witem);
   } catch (e) {
     rlog(e.toString());
     return;
@@ -134,6 +127,7 @@ async function deleteNetwork(item) {
       try {
         await ethNetworkTable.delete(item);
         await ethWalletInfoTable.delete_network(item.network);
+        // TODO: remvoe ethWalletInfoTableData associate item
       } catch (e) {
         rlog(e.toString());
       }
