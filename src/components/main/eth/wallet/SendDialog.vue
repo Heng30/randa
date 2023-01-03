@@ -23,10 +23,13 @@
           >
             <template v-slot:suffix>
               <el-tooltip content="地址簿" placement="top">
-                <i
-                  class="el-input__icon el-icon-notebook-2"
-                  @click="showAddrBook"
-                ></i>
+                <AddressBook
+                  @finished="
+                    (address) => {
+                      inputRecvAddr = address;
+                    }
+                  "
+                />
               </el-tooltip>
             </template>
           </el-input>
@@ -75,10 +78,11 @@
 
 <script setup>
 import { ref } from 'vue';
+import { ethers } from 'ethers';
 import { Message } from 'element3';
 import { chainGasPrice, tokenPrice, ethNetwork } from '../../../../js/store.js';
-
-import { isValidEthAddr } from '../../../../js/utils.js';
+import { isValidEthAddr, ethProvider } from '../../../../js/utils.js';
+import AddressBook from './AddressBook.vue';
 
 const dialogVisible = ref(false);
 const inputGasPrice = ref('');
@@ -122,6 +126,17 @@ async function calEstimatGasFee() {
       Number(ethPrice)) /
     1e9;
   estimatGasFee.value = fee.toFixed(4);
+
+  if (titem.tokenName !== 'ETH') {
+    setTimeout(async () => {
+      const gasUsed = Number(await _estimateGas(titem.tokenAddr));
+      if (!isNaN(gasUsed)) {
+        const fee =
+          (Number(inputGasPrice.value) * gasUsed * Number(ethPrice)) / 1e9;
+        estimatGasFee.value = fee.toFixed(4);
+      }
+    }, 10);
+  }
 }
 
 function cancelSend() {
@@ -160,5 +175,15 @@ async function sendToken() {
 
 function showAddrBook() {
   console.log('TODO: show address book');
+}
+
+async function _estimateGas(contractAddr) {
+  const abi = ['function transfer(address to, uint amount) returns (bool)'];
+  const erc20 = new ethers.Contract(contractAddr, abi, ethProvider());
+  const gasUsed = await erc20.estimateGas.transfer(
+    '0x8703450265C2A450bDC41C785E7C00397389b7E0',
+    ethers.utils.parseEther('1.0')
+  );
+  return gasUsed.toString();
 }
 </script>

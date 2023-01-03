@@ -445,7 +445,7 @@ async function _doTransaction(item) {
   item.isSending = true;
   try {
     let receipt = null;
-    if (item.tokenName === 'ETH' || item.tokenAddr === 'N/A') {
+    if (item.tokenName === 'ETH') {
       const tx = {
         to: item.recvAddr,
         value: ethers.utils.parseEther(item.sendAmount),

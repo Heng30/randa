@@ -125,6 +125,7 @@ async function deleteProvider(item) {
       tableData.splice(i, 1);
       await ethProviderAPIKeyTable.delete(item);
       ethProviderAPIKey[item.name] = null;
+      return;
     }
   }
 }

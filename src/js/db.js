@@ -4,6 +4,7 @@ import {
   ethProviderAPIKey,
   ethNetwork,
   ethWalletInfoTableData,
+  ethAddressBookTableData,
 } from './store.js';
 import Web3 from 'web3';
 import { rlog } from './utils.js';
@@ -30,9 +31,13 @@ export const initDB = async function () {
   await DB.execute(`CREATE TABLE IF NOT EXISTS eth_wallet_info (name TEXT NOT NULL, tokenAddr TEXT NOT NULL, amount TEXT NOT NULL, network TEXT NOT NULL, status TEXT NOT NULL, disabled INT NOT NULL);
 `);
 
+  await DB.execute(`CREATE TABLE IF NOT EXISTS address_book (name TEXT NOT NULL, address TEXT NOT NULL, chain TEXT NOT NULL);
+`);
+
   await ethProviderAPIKeyTable.init();
   await ethNetworkTable.init();
   await ethWalletInfoTable.init();
+  await addressBookTable.init();
 };
 
 export const uninitDB = async function () {
@@ -212,5 +217,37 @@ export const ethWalletInfoTable = {
     await DB.execute(`DELETE FROM eth_wallet_info WHERE network=($1)`, [
       network,
     ]);
+  },
+};
+
+export const addressBookTable = {
+  init: async function () {
+    const rows = await this.load();
+    rows.forEach((item) => {
+      if (item.chain === 'Ethereum') {
+        ethAddressBookTableData.push({
+          name: item.name,
+          address: item.address,
+          chain: item.chain,
+        });
+      }
+    });
+  },
+  load: async function () {
+    let rows = await DB.select('SELECT * FROM address_book');
+    return rows;
+  },
+  insert: async function (item) {
+    await DB.execute(`INSERT INTO address_book VALUES ($1, $2, $3)`, [
+      item.name,
+      item.address,
+      item.chain,
+    ]);
+  },
+  delete: async function (item) {
+    await DB.execute(
+      `DELETE FROM address_book WHERE name=($1) AND chain=($2)`,
+      [item.name, item.chain]
+    );
   },
 };
