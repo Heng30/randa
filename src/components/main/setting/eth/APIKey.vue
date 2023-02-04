@@ -34,19 +34,21 @@
         >
       </div>
 
-      <el-table :data="tableData" style="width: 100%" stripe>
-        <el-table-column prop="name" label="供应商" width="160">
-        </el-table-column>
-        <el-table-column prop="apikey" label="API Key" width="540">
-        </el-table-column>
-        <el-table-column align="right">
-          <template v-slot="scope">
-            <el-button type="danger" @click="deleteProvider(scope.row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+      <div style="overflow-y: scroll">
+        <el-table :data="tableData" style="width: 100%" stripe>
+          <el-table-column prop="name" label="供应商" width="160">
+          </el-table-column>
+          <el-table-column prop="apikey" label="API Key" width="540">
+          </el-table-column>
+          <el-table-column align="right">
+            <template v-slot="scope">
+              <el-button type="danger" @click="deleteProvider(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
   </div>
 </template>

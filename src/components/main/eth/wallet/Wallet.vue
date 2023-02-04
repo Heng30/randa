@@ -71,71 +71,72 @@
       >
     </div>
 
-    <el-table
-      :data="tableData"
-      style="width: 100%; margin-bottom: 10px"
-      height="1000"
-      border
-      stripe
-    >
-      <el-table-column label="代币" width="150">
-        <template v-slot="scope">
-          <el-tooltip :content="scope.row.tokenAddr" placement="top">
-            <span> {{ scope.row.tokenName }} </span>
-          </el-tooltip>
-        </template>
-      </el-table-column>
-      <el-table-column prop="amount" label="数量" width="150">
-      </el-table-column>
-      <el-table-column prop="status" label="交易状态" width="150">
-      </el-table-column>
-      <el-table-column align="right">
-        <template v-slot:header="scope">
-          <el-input
-            v-model="inputImportTokenName"
-            placeholder="输入代币名称"
-            style="width: 120px; margin-right: 10px"
-          />
-          <el-input
-            v-model="inputImportTokenAddr"
-            placeholder="请输入代币地址"
-            style="width: 510px"
-          />
-          <el-button
-            type="primary"
-            @click="importToken"
-            style="margin-left: 10px"
-            >添加</el-button
-          >
-          <el-button
-            type="primary"
-            @click="refreshTableInfo"
-            :loading="isRefreshingTableInfo"
-            >刷新</el-button
-          >
-        </template>
-
-        <template v-slot="scope">
-          <div>
+    <div style="flex-grow: 1; overflow-y: scroll">
+      <el-table
+        :data="tableData"
+        style="width: 100%; margin-bottom: 10px"
+        border
+        stripe
+      >
+        <el-table-column label="代币" width="150">
+          <template v-slot="scope">
+            <el-tooltip :content="scope.row.tokenAddr" placement="top">
+              <span> {{ scope.row.tokenName }} </span>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column prop="amount" label="数量" width="150">
+        </el-table-column>
+        <el-table-column prop="status" label="交易状态" width="150">
+        </el-table-column>
+        <el-table-column align="right">
+          <template v-slot:header="scope">
+            <el-input
+              v-model="inputImportTokenName"
+              placeholder="输入代币名称"
+              style="width: 120px; margin-right: 10px"
+            />
+            <el-input
+              v-model="inputImportTokenAddr"
+              placeholder="请输入代币地址"
+              style="width: 510px"
+            />
             <el-button
               type="primary"
-              @click="showSendDialog(scope.row)"
-              :loading="scope.row.isSending"
+              @click="importToken"
+              style="margin-left: 10px"
+              >添加</el-button
             >
-              发送
-            </el-button>
-
             <el-button
-              type="danger"
-              @click="deleteToken(scope.row)"
-              :disabled="!!scope.row.disabled"
+              type="primary"
+              @click="refreshTableInfo"
+              :loading="isRefreshingTableInfo"
+              >刷新</el-button
             >
-              删除
-            </el-button>
-          </div>
-        </template>
-      </el-table-column>
-    </el-table>
+          </template>
+
+          <template v-slot="scope">
+            <div>
+              <el-button
+                type="primary"
+                @click="showSendDialog(scope.row)"
+                :loading="scope.row.isSending"
+              >
+                发送
+              </el-button>
+
+              <el-button
+                type="danger"
+                @click="deleteToken(scope.row)"
+                :disabled="!!scope.row.disabled"
+              >
+                删除
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 

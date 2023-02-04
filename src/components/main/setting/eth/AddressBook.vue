@@ -9,7 +9,7 @@
         <el-input
           v-model="inputName"
           placeholder="请输入名称"
-          style="display: inline-block; margin-right: 10px; width: 250px;"
+          style="display: inline-block; margin-right: 10px; width: 250px"
         />
 
         <el-input
@@ -18,27 +18,26 @@
           style="display: inline-block"
         />
 
-        <el-button
-          type="primary"
-          style="margin: 0 4px 0 10px"
-          @click="addAddr"
+        <el-button type="primary" style="margin: 0 4px 0 10px" @click="addAddr"
           >添加</el-button
         >
       </div>
 
-      <el-table :data="tableData" style="width: 100%" stripe>
-        <el-table-column prop="name" label="名称" width="250">
-        </el-table-column>
-        <el-table-column prop="address" label="地址" width="450">
-        </el-table-column>
-        <el-table-column align="right">
-          <template v-slot="scope">
-            <el-button type="danger" @click="deleteAddress(scope.row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+      <div style="overflow-y: scroll">
+        <el-table :data="tableData" style="width: 100%" stripe>
+          <el-table-column prop="name" label="名称" width="250">
+          </el-table-column>
+          <el-table-column prop="address" label="地址" width="450">
+          </el-table-column>
+          <el-table-column align="right">
+            <template v-slot="scope">
+              <el-button type="danger" @click="deleteAddress(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
   </div>
 </template>
@@ -51,7 +50,7 @@
 </style>
 
 <script setup>
-import { ref} from 'vue';
+import { ref } from 'vue';
 import { Message } from 'element3';
 import { ethAddressBookTableData } from '../../../../js/store.js';
 import { addressBookTable } from '../../../../js/db.js';
@@ -94,7 +93,7 @@ async function addAddr() {
   const item = {
     name: inputName.value,
     address: inputAddr.value,
-    chain: 'Ethereum'
+    chain: 'Ethereum',
   };
   tableData.push(item);
 

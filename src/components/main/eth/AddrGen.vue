@@ -53,14 +53,21 @@
       </el-button>
     </div>
 
-    <el-table :data="tableData" style="width: 100%; margin-bottom: 10px" height="1000" border stripe>
-      <el-table-column prop="priKey" label="私钥" width="500">
-      </el-table-column>
-      <el-table-column prop="pubKey" label="公钥" width="500">
-      </el-table-column>
-      <el-table-column prop="address" label="地址"> </el-table-column>
-      <el-table-column prop="mnemonic" label="组记词"> </el-table-column>
-    </el-table>
+    <div style="flex-grow: 1; overflow-y:scroll">
+      <el-table
+        :data="tableData"
+        style="width: 100%; margin-bottom: 10px"
+        border
+        stripe
+      >
+        <el-table-column prop="priKey" label="私钥" width="500">
+        </el-table-column>
+        <el-table-column prop="pubKey" label="公钥" width="500">
+        </el-table-column>
+        <el-table-column prop="address" label="地址"> </el-table-column>
+        <el-table-column prop="mnemonic" label="组记词"> </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 

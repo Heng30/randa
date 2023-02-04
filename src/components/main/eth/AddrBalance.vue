@@ -37,45 +37,49 @@
       >
     </div>
 
-    <el-table :data="tableData" style="width: 100%; margin-bottom: 10px" height="1000" border stripe>
-      <el-table-column prop="address" label="地址" width="500">
-      </el-table-column>
-      <el-table-column prop="balance" label="余额" width="250">
-      </el-table-column>
-      <el-table-column align="right">
-        <template v-slot:header="scope">
-          <div>
-            <el-input
-              v-model="inputAddr"
-              placeholder="请输入需要查询余额的地址"
-              style="width: 400px"
-            />
-            <el-button
-              type="primary"
-              style="margin: 0 10px"
-              @click="addAddr"
-              >添加</el-button
-            >
-            <el-divider direction="vertical"></el-divider>
-            <el-tooltip content="提示: 每个地址占一行" placement="top">
-              <FileDialog
-                @accept="importAddrs"
-                style="margin-left: 10px"
-                buttonLabel="批量导入"
+    <div style="flex-grow: 1; overflow-y: scroll">
+      <el-table
+        :data="tableData"
+        style="width: 100%; margin-bottom: 10px"
+        border
+        stripe
+      >
+        <el-table-column prop="address" label="地址" width="500">
+        </el-table-column>
+        <el-table-column prop="balance" label="余额" width="250">
+        </el-table-column>
+        <el-table-column align="right">
+          <template v-slot:header="scope">
+            <div>
+              <el-input
+                v-model="inputAddr"
+                placeholder="请输入需要查询余额的地址"
+                style="width: 400px"
+              />
+              <el-button type="primary" style="margin: 0 10px" @click="addAddr"
+                >添加</el-button
               >
-              </FileDialog>
-            </el-tooltip>
+              <el-divider direction="vertical"></el-divider>
+              <el-tooltip content="提示: 每个地址占一行" placement="top">
+                <FileDialog
+                  @accept="importAddrs"
+                  style="margin-left: 10px"
+                  buttonLabel="批量导入"
+                >
+                </FileDialog>
+              </el-tooltip>
 
-            <el-button type="primary" @click="saveAddrs"> 保存 </el-button>
-          </div>
-        </template>
-        <template v-slot="scope">
-          <el-button type="danger" @click="deleteAddr(scope.row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
+              <el-button type="primary" @click="saveAddrs"> 保存 </el-button>
+            </div>
+          </template>
+          <template v-slot="scope">
+            <el-button type="danger" @click="deleteAddr(scope.row)"
+              >删除</el-button
+            >
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 
@@ -83,10 +87,7 @@
 import { ethers } from 'ethers';
 import { ref, onMounted } from 'vue';
 import { Message } from 'element3';
-import {
-  arrayBuffer2UTF8,
-  ethProvider,
-} from '../../../js/utils.js';
+import { arrayBuffer2UTF8, ethProvider } from '../../../js/utils.js';
 import { ethNetwork } from '../../../js/store.js';
 import { ethAddrBalanceTable } from '../../../js/db.js';
 import FileDialog from '../../cbase/FileDialog.vue';

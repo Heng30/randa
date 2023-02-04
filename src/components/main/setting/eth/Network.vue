@@ -25,22 +25,24 @@
         >
       </div>
 
-      <el-table :data="tableData" style="width: 100%" stripe>
-        <el-table-column prop="name" label="名称" width="250">
-        </el-table-column>
-        <el-table-column prop="network" label="地址" width="450">
-        </el-table-column>
-        <el-table-column align="right">
-          <template v-slot="scope">
-            <el-button
-              type="danger"
-              @click="deleteNetwork(scope.row)"
-              :disabled="scope.row.disabled"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+      <div style="overflow-y: scroll">
+        <el-table :data="tableData" style="width: 100%" stripe>
+          <el-table-column prop="name" label="名称" width="250">
+          </el-table-column>
+          <el-table-column prop="network" label="地址" width="450">
+          </el-table-column>
+          <el-table-column align="right">
+            <template v-slot="scope">
+              <el-button
+                type="danger"
+                @click="deleteNetwork(scope.row)"
+                :disabled="scope.row.disabled"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
   </div>
 </template>

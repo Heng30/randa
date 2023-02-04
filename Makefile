@@ -9,3 +9,7 @@ build:
 
 run-dev:
 	RUST_LOG=error,warn,info,debug,reqwest=off npm run tauri dev --no-watch
+
+icon:
+	npx @tauri-apps/tauricon
+

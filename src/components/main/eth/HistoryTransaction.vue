@@ -36,20 +36,27 @@
       </el-button>
     </div>
 
-    <el-table :data="tableData" style="width: 100%" height="1000" border stripe>
-      <el-table-column prop="transactionTime" label="交易时间" width="180">
-      </el-table-column>
-      <el-table-column prop="transactionHash" label="交易哈希">
-      </el-table-column>
-      <el-table-column prop="fromAddr" label="发送者" width="430">
-      </el-table-column>
-      <el-table-column prop="toAddr" label="接收者" width="430">
-      </el-table-column>
-      <el-table-column prop="amount" label="数量(Eth)" width="100">
-      </el-table-column>
-      <el-table-column prop="confirmations" label="确认数" width="120">
-      </el-table-column>
-    </el-table>
+    <div style="flex-grow: 1; overflow-y: scroll">
+      <el-table
+        :data="tableData"
+        style="width: 100%"
+        border
+        stripe
+      >
+        <el-table-column prop="transactionTime" label="交易时间" width="180">
+        </el-table-column>
+        <el-table-column prop="transactionHash" label="交易哈希">
+        </el-table-column>
+        <el-table-column prop="fromAddr" label="发送者" width="430">
+        </el-table-column>
+        <el-table-column prop="toAddr" label="接收者" width="430">
+        </el-table-column>
+        <el-table-column prop="amount" label="数量(Eth)" width="100">
+        </el-table-column>
+        <el-table-column prop="confirmations" label="确认数" width="120">
+        </el-table-column>
+      </el-table>
+    </div>
 
     <div
       style="
@@ -118,10 +125,9 @@ async function queryHistoryTransaction() {
         transactionHash: transaction.hash,
         fromAddr: transaction.from,
         toAddr: transaction.to,
-        amount:
-          Number(
-            ethers.utils.formatEther(transaction.value.toString())
-          ).toFixed(4),
+        amount: Number(
+          ethers.utils.formatEther(transaction.value.toString())
+        ).toFixed(4),
         confirmations: transaction.confirmations,
       });
     });

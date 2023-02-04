@@ -1,17 +1,17 @@
 <template>
   <el-popover placement="right" width="700" trigger="hover">
-    <el-table :data="tableData" @row-click="rowClick">
-      <el-table-column
-        width="250"
-        property="name"
-        label="名称"
-      ></el-table-column>
-      <el-table-column
-        width="450"
-        property="address"
-        label="地址"
-      ></el-table-column>
-    </el-table>
+      <el-table :data="tableData" @row-click="rowClick">
+        <el-table-column
+          width="250"
+          property="name"
+          label="名称"
+        ></el-table-column>
+        <el-table-column
+          width="450"
+          property="address"
+          label="地址"
+        ></el-table-column>
+      </el-table>
     <template #reference>
       <i class="el-input__icon el-icon-notebook-2"></i>
     </template>
